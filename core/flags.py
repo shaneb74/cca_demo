@@ -53,6 +53,15 @@ FEATURE_FLAGS = {
             "assist": "Show both LLM summaries and legacy forms",
             "adjust": "Full LLM-generated comprehensive advisor assessment reports"
         }
+    },
+    "FEATURE_FAQ_AUDIO": {
+        "default": "on",
+        "values": ["off", "on"],
+        "description": "Enable text-to-speech playback for FAQ answers using ElevenLabs",
+        "details": {
+            "off": "Text-only FAQ responses",
+            "on": "Optional 🔊 Listen toggle for FAQ audio playback (default)"
+        }
     }
 }
 
