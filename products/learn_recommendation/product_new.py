@@ -99,9 +99,10 @@ def render():
     st.markdown(f"""
     <div class="video-container">
         <iframe class="video-frame"
-            src="https://www.youtube.com/watch?v=ojTeCwSJ4rk"
+            src="https://www.youtube.com/embed/ojTeCwSJ4rk"
             title="Understanding {tier_display}"
             frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen>
         </iframe>
     </div>
