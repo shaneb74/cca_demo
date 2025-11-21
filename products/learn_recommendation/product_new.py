@@ -1,5 +1,8 @@
 """Learn About My Recommendation - Educational Bridge Product
 
+⚠️ DEPRECATED: This file is not actively used. See product.py instead.
+The __init__.py imports from product.py, making this file obsolete.
+
 Phase 4B: Educational and empathetic step between GCP and Cost Planner.
 Helps users understand their recommendation before planning costs or scheduling advisors.
 
