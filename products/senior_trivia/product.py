@@ -452,7 +452,7 @@ def _render_module_hub():
         },
     ]
 
-    # Add condition-triggered modules
+    # Add condition-triggered modules at the TOP of the list
     if has_diabetes:
         # Check if badge earned to determine badge status
         diabetes_badge = badges_earned.get("diabetes_knowledge")
@@ -465,8 +465,8 @@ def _render_module_hub():
             "badge_status": "🆕 New" if not diabetes_badge else None,
             "condition_triggered": True,
         }
-        # Insert after healthy_habits (before community_challenge)
-        modules.insert(4, diabetes_module)
+        # Insert at the TOP of the list (index 0) to make it prominent
+        modules.insert(0, diabetes_module)
 
     for module in modules:
         # Check if badge earned for this module
