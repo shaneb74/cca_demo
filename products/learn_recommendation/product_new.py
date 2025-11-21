@@ -99,7 +99,7 @@ def render():
     st.markdown(f"""
     <div class="video-container">
         <iframe class="video-frame"
-            src="https://www.youtube.com/embed/{video_id}"
+            src="https://www.youtube.com/watch?v=ojTeCwSJ4rk"
             title="Understanding {tier_display}"
             frameborder="0"
             allowfullscreen>
