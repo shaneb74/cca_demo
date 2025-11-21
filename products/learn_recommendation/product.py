@@ -102,7 +102,7 @@ def render():
             <div class="card-body">
                 <div class="video-wrapper">
                     <iframe class="video-iframe"
-                        src="https://www.youtube.com/embed/{video_id}"
+                        src="https://www.youtube.com/watch?v=ojTeCwSJ4rk"
                         title="Understanding {tier_display}"
                         frameborder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
