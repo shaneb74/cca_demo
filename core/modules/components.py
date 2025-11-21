@@ -87,10 +87,12 @@ def input_radio(field: FieldDef, current: Any = None) -> Any:
     label = _safe_label(field.label, field.key)
     _label(label, field.help, field.a11y_hint)
     
-    # Randomize option order to prevent answer predictability
-    # Use field key as seed for consistent ordering across re-renders
+    # Randomize option order ONLY for trivia products to prevent answer predictability
+    # Check if current module is a trivia quiz
+    is_trivia = st.session_state.get("senior_trivia_current_module") is not None
+    
     options = field.options or []
-    if options:
+    if options and is_trivia:
         random.seed(hash(field.key))
         options = random.sample(options, len(options))
         random.seed()  # Reset seed for other randomness
@@ -137,11 +139,14 @@ def input_pill(field: FieldDef, current: Any = None) -> Any:
     if not options:
         return current if current is not None else field.default
 
-    # Randomize option order to prevent answer predictability
-    # Use field key as seed for consistent ordering across re-renders
-    random.seed(hash(field.key))
-    options = random.sample(options, len(options))
-    random.seed()  # Reset seed for other randomness
+    # Randomize option order ONLY for trivia products to prevent answer predictability
+    # Check if current module is a trivia quiz
+    is_trivia = st.session_state.get("senior_trivia_current_module") is not None
+    
+    if is_trivia:
+        random.seed(hash(field.key))
+        options = random.sample(options, len(options))
+        random.seed()  # Reset seed for other randomness
 
     # Build value mapping
     labels = [opt.get("label", "") for opt in options]
@@ -202,10 +207,12 @@ def input_dropdown(field: FieldDef, current: Any = None) -> Any:
     label = _safe_label(field.label, field.key)
     _label(label, field.help, field.a11y_hint)
     
-    # Randomize option order to prevent answer predictability
-    # Use field key as seed for consistent ordering across re-renders
+    # Randomize option order ONLY for trivia products to prevent answer predictability
+    # Check if current module is a trivia quiz
+    is_trivia = st.session_state.get("senior_trivia_current_module") is not None
+    
     options = field.options or []
-    if options:
+    if options and is_trivia:
         random.seed(hash(field.key))
         options = random.sample(options, len(options))
         random.seed()  # Reset seed for other randomness
@@ -325,11 +332,14 @@ def input_chip_multi(field: FieldDef, current: Any = None) -> list[str]:
     if not options:
         return _normalize_list(current if current is not None else field.default)
 
-    # Randomize option order to prevent answer predictability
-    # Use field key as seed for consistent ordering across re-renders
-    random.seed(hash(field.key))
-    options = random.sample(options, len(options))
-    random.seed()  # Reset seed for other randomness
+    # Randomize option order ONLY for trivia products to prevent answer predictability
+    # Check if current module is a trivia quiz
+    is_trivia = st.session_state.get("senior_trivia_current_module") is not None
+    
+    if is_trivia:
+        random.seed(hash(field.key))
+        options = random.sample(options, len(options))
+        random.seed()  # Reset seed for other randomness
 
     # Build value mapping
     labels = [opt.get("label", "") for opt in options]
