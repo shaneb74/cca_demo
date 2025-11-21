@@ -247,16 +247,8 @@ def render_dashboard_body(
         additional_html = "".join(additional_chunks)
     elif gcp_prog >= 100:
         # GCP complete but no services (user didn't trigger any flags)
-        additional_html = "".join(
-            [
-                '<section class="dashboard-additional">',
-                '<header class="dashboard-additional__head">',
-                '<h3 class="dashboard-additional__title">Additional services</h3>',
-                '<p class="dashboard-muted">No additional services recommended at this time. Your care plan looks solid!</p>',
-                "</header>",
-                "</section>",
-            ]
-        )
+        # Don't show anything - the partner-powered services section will still appear below
+        additional_html = ""
     # If GCP not complete, don't show anything (section will appear after completion)
 
     shell = "".join(
