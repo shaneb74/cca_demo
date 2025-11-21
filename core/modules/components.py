@@ -82,8 +82,22 @@ def _normalize_list(value: Any) -> list[str]:
 
 
 def input_radio(field: FieldDef, current: Any = None) -> Any:
+    import random
+    
     label = _safe_label(field.label, field.key)
     _label(label, field.help, field.a11y_hint)
+    
+    # Randomize option order to prevent answer predictability
+    # Use field key as seed for consistent ordering across re-renders
+    options = field.options or []
+    if options:
+        random.seed(hash(field.key))
+        options = random.sample(options, len(options))
+        random.seed()  # Reset seed for other randomness
+        
+        # Update field.options temporarily for this render
+        field.options = options
+    
     labels = _option_labels(field.options)
     choice = st.radio(
         label=label,
@@ -98,6 +112,8 @@ def input_radio(field: FieldDef, current: Any = None) -> Any:
 
 def input_pill(field: FieldDef, current: Any = None) -> Any:
     """Render pill-style radio buttons (uses st.radio with custom CSS)."""
+    import random
+    
     label = _safe_label(field.label, field.key)
     options = field.options or []
     if not options:
@@ -107,6 +123,12 @@ def input_pill(field: FieldDef, current: Any = None) -> Any:
     options = [opt for opt in options if opt.get("label", "").strip()]
     if not options:
         return current if current is not None else field.default
+
+    # Randomize option order to prevent answer predictability
+    # Use field key as seed for consistent ordering across re-renders
+    random.seed(hash(field.key))
+    options = random.sample(options, len(options))
+    random.seed()  # Reset seed for other randomness
 
     # Build value mapping
     labels = [opt.get("label", "") for opt in options]
@@ -159,8 +181,22 @@ def input_pill(field: FieldDef, current: Any = None) -> Any:
 
 
 def input_dropdown(field: FieldDef, current: Any = None) -> Any:
+    import random
+    
     label = _safe_label(field.label, field.key)
     _label(label, field.help, field.a11y_hint)
+    
+    # Randomize option order to prevent answer predictability
+    # Use field key as seed for consistent ordering across re-renders
+    options = field.options or []
+    if options:
+        random.seed(hash(field.key))
+        options = random.sample(options, len(options))
+        random.seed()  # Reset seed for other randomness
+        
+        # Update field.options temporarily for this render
+        field.options = options
+    
     labels = _option_labels(field.options)
     choice = st.selectbox(
         label=label,
@@ -253,10 +289,18 @@ def input_textarea(field: FieldDef, current: Any = None) -> str:
 
 def input_chip_multi(field: FieldDef, current: Any = None) -> list[str]:
     """Render pill-style multi-select (uses st.multiselect with custom CSS)."""
+    import random
+    
     label = _safe_label(field.label, field.key)
     options = field.options or []
     if not options:
         return _normalize_list(current if current is not None else field.default)
+
+    # Randomize option order to prevent answer predictability
+    # Use field key as seed for consistent ordering across re-renders
+    random.seed(hash(field.key))
+    options = random.sample(options, len(options))
+    random.seed()  # Reset seed for other randomness
 
     # Build value mapping
     labels = [opt.get("label", "") for opt in options]
