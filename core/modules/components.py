@@ -99,14 +99,27 @@ def input_radio(field: FieldDef, current: Any = None) -> Any:
         field.options = options
     
     labels = _option_labels(field.options)
+    
+    # Calculate index - use None for no default selection unless user has already answered
+    current_value = current if current is not None else field.default
+    if current_value is not None:
+        default_index = _default_index(field.options, current_value)
+    else:
+        default_index = None  # No default selection - forces user to choose
+    
     choice = st.radio(
         label=label,
         options=labels,
-        index=_default_index(field.options, current if current is not None else field.default),
+        index=default_index,
         horizontal=True,
         label_visibility="collapsed",
         key=f"{field.key}_radio",
     )
+    
+    # If nothing selected yet, return None
+    if choice is None:
+        return None
+    
     return _value_from_label(field.options, choice)
 
 
@@ -156,20 +169,19 @@ def input_pill(field: FieldDef, current: Any = None) -> Any:
 
     radio_key = f"{field.key}_pill"
 
-    # Calculate index - use current value if available, otherwise default to first option
-    # Note: st.radio requires a valid integer index, not None
-    if current_label in labels:
+    # Calculate index - use None for no default selection (forces user to choose)
+    # If user has already answered (current value exists), pre-select that
+    if current_value is not None and current_label in labels:
         default_index = labels.index(current_label)
     else:
-        # No current value - default to first option
-        # This ensures single-click selection works for all options
-        default_index = 0
+        # No selection by default - user must click to answer
+        default_index = None
 
     # Use native st.radio with horizontal layout
     choice_label = st.radio(
         label=label,
         options=labels,
-        index=default_index,  # Must be valid integer for single-click selection
+        index=default_index,  # None means no default selection
         horizontal=True,
         label_visibility="collapsed",
         key=radio_key,
@@ -177,6 +189,10 @@ def input_pill(field: FieldDef, current: Any = None) -> Any:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
+    # If nothing selected yet, return None
+    if choice_label is None:
+        return None
+    
     return label_to_value.get(choice_label, choice_label)
 
 
@@ -198,13 +214,26 @@ def input_dropdown(field: FieldDef, current: Any = None) -> Any:
         field.options = options
     
     labels = _option_labels(field.options)
+    
+    # Calculate index - use None for no default selection unless user has already answered
+    current_value = current if current is not None else field.default
+    if current_value is not None:
+        default_index = _default_index(field.options, current_value)
+    else:
+        default_index = None  # No default selection - forces user to choose
+    
     choice = st.selectbox(
         label=label,
         options=labels,
-        index=_default_index(field.options, current if current is not None else field.default),
+        index=default_index,
         label_visibility="collapsed",
         key=f"{field.key}_dropdown",
     )
+    
+    # If nothing selected yet, return None
+    if choice is None:
+        return None
+    
     return _value_from_label(field.options, choice)
 
 
