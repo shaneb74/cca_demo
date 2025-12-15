@@ -84,7 +84,7 @@
           "id": "living_situation",
           "type": "string",
           "select": "single",
-          "label": "Current living situation?",
+          "label": "What is {NAME_POS} current living situation?",
           "required": true,
           "default": "alone",
           "options": [
