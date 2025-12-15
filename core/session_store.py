@@ -505,6 +505,8 @@ def load_user(uid: str) -> dict[str, Any]:
             "mcip": {},
             "preferences": {},
             "tiles": {},
+            "lead_id": None,  # Generated on first meaningful engagement
+            "customer_id": None,  # Generated on appointment booking
         }
 
     data["uid"] = uid
@@ -632,6 +634,8 @@ USER_PERSIST_KEYS = {
     "preferences",
     "auth",
     "flags",
+    "lead_id",  # Lead ID for CRM tracking (generated on first engagement)
+    "customer_id",  # Customer ID for CRM tracking (generated on appointment booking)
     # Cost Planner v2 state keys
     "cost",  # Top-level cost state (completed, monthly_total, last_totals, affordability)
     "_qe_totals",  # Quick estimate totals cache (for instant CP load)

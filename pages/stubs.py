@@ -500,6 +500,12 @@ def render_faqs():
 
 
 # --- DEPRECATED: temporarily disabled during CSS/IA refactor ---
+def render_legacy_fa_intro():
+    """Legacy FA intro route - redirect to modern PFMA v3."""
+    from core.nav import route_to
+    route_to("pfma_v3")
+
+
 def render_signup():
     # intentionally disabled (will be rebuilt as its own page)
     return

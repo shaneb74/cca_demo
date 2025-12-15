@@ -168,8 +168,8 @@
         },
         {
           "key": "fa_intro",
-          "label": "Financial Assessment",
-          "module": "products.pfma_v3.product:render",
+          "label": "Financial Assessment (Legacy)",
+          "module": "pages.stubs:render_legacy_fa_intro",
           "hidden": true
         },
         {

@@ -54,13 +54,23 @@ def load_configuration():
         # Try Streamlit secrets if env var not found
         if value is None:
             try:
-                value = st.secrets.get(key)
-            except (AttributeError, FileNotFoundError):
+                # Access secrets carefully - they might not be available yet
+                if hasattr(st, 'secrets') and st.secrets is not None:
+                    value = st.secrets.get(key)
+                    if value is not None:
+                        print(f"[CONFIG] ✓ Loaded {key} from Streamlit secrets")
+            except (AttributeError, FileNotFoundError, KeyError):
                 pass
+            except Exception as e:
+                print(f"[CONFIG] ⚠️  Error accessing secrets for {key}: {e}")
+        else:
+            print(f"[CONFIG] ✓ Loaded {key} from environment")
         
         # Use default if still not found
         if value is None:
             value = default
+            if default is not None:
+                print(f"[CONFIG] ℹ️  Using default for {key}")
         
         return value
     

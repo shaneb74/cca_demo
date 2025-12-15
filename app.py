@@ -2,6 +2,13 @@
 import logging
 import os
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not installed, will use system environment
+
 import streamlit as st
 
 # Load centralized configuration (this caches API keys and config)

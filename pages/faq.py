@@ -26,7 +26,7 @@ import re
 import streamlit as st
 import numpy as np
 
-from core.flags import get_all_flags
+from core.flags import get_all_flags, get_flag_value
 from core.mcip import MCIP
 from core.nav import route_to
 from core.navi import NaviOrchestrator
@@ -1259,6 +1259,25 @@ def render():
     if "faq_send_now" not in st.session_state:
         st.session_state["faq_send_now"] = False
     
+    # Initialize audio cache early to prevent KeyError
+    if "audio_cache" not in st.session_state:
+        st.session_state["audio_cache"] = {}
+    
+    # Clear audio config validation cache when returning to page from elsewhere
+    # Track current page to detect navigation
+    current_page = "faq"
+    last_page = st.session_state.get("_last_visited_page")
+    
+    if last_page != current_page:
+        # User navigated to this page from elsewhere - clear validation cache
+        if "elevenlabs_config_valid" in st.session_state:
+            del st.session_state["elevenlabs_config_valid"]
+        if "elevenlabs_config_msg" in st.session_state:
+            del st.session_state["elevenlabs_config_msg"]
+    
+    # Update last visited page
+    st.session_state["_last_visited_page"] = current_page
+    
     # Get processing state early so it can be used in UI
     is_processing = st.session_state.get("faq_processing", False)
     
@@ -1332,6 +1351,17 @@ def render():
             advisor_href = add_uid_to_href("?page=hub_lobby")
             st.markdown('<div class="ai-input-wrap">', unsafe_allow_html=True)
             st.markdown('<div class="chat-sentinel composer-sentinel"></div>', unsafe_allow_html=True)
+            
+            # Callback to handle Enter key in text input
+            def on_input_change():
+                # Only trigger send if there's actual text content
+                input_text = st.session_state.get("faq_composer_input", "").strip()
+                if input_text:
+                    st.session_state["faq_send_now"] = True
+                else:
+                    # Clear the flag if input is empty
+                    st.session_state["faq_send_now"] = False
+            
             col1, col2 = st.columns([5, 1], gap="medium")
 
             with col1:
@@ -1341,6 +1371,7 @@ def render():
                     placeholder="e.g., What is assisted living? Who is CCA?",
                     label_visibility="collapsed",
                     disabled=is_processing,
+                    on_change=on_input_change,
                 )
 
             with col2:
@@ -1351,39 +1382,53 @@ def render():
                     disabled=is_processing,
                 )
             
-            # Enable Enter key to trigger Send button (without on_change callback)
-            st.markdown(
-                """
-                <script>
-                (function() {
-                    // Find the text input and send button
-                    const input = window.parent.document.querySelector('input[aria-label="Ask about planning, costs, eligibility, or our company…"]');
-                    const sendBtn = window.parent.document.querySelector('button[kind="primaryFormSubmit"]');
-                    
-                    if (input && sendBtn && !input.dataset.enterListenerAdded) {
-                        input.dataset.enterListenerAdded = 'true';
-                        input.addEventListener('keydown', function(e) {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                sendBtn.click();
-                            }
-                        });
-                    }
-                })();
-                </script>
-                """,
-                unsafe_allow_html=True,
-            )
+            # Remove the JavaScript - using on_change callback instead
 
             st.markdown(
                 f"""
                 <div class=\"composer-meta\">
-                  <span>Tip: Ask about care costs, benefits, or what happens next.</span>
                   <a href=\"{advisor_href}\">Need a human advisor?</a>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
+            
+            # Voice toggle on main screen with config validation
+            if get_flag_value("FEATURE_FAQ_AUDIO") == "on":
+                # Validate configuration before showing toggle
+                from core.config import validate_elevenlabs_config, get_config
+                
+                # Cache validation result in session state to avoid repeated checks
+                if "elevenlabs_config_valid" not in st.session_state:
+                    is_valid, msg = validate_elevenlabs_config()
+                    st.session_state["elevenlabs_config_valid"] = is_valid
+                    st.session_state["elevenlabs_config_msg"] = msg
+                    
+                    # Debug logging
+                    api_key = get_config("ELEVENLABS_API_KEY")
+                    if api_key:
+                        print(f"[FAQ_AUDIO] ✓ Config validation: API key present (length: {len(api_key)})")
+                    else:
+                        print("[FAQ_AUDIO] ❌ Config validation: API key missing")
+                else:
+                    is_valid = st.session_state["elevenlabs_config_valid"]
+                    msg = st.session_state["elevenlabs_config_msg"]
+                
+                if is_valid:
+                    st.toggle("🔊 Enable voice responses", key="faq_voice_enabled", value=False, help="When enabled, answers will include audio playback")
+                else:
+                    # Show warning if config is invalid (collapsed by default to be less intrusive)
+                    with st.expander("⚠️ Audio Configuration Issue", expanded=False):
+                        st.warning(msg)
+                        st.caption("Audio playback requires ElevenLabs API credentials. Contact your administrator.")
+                        if st.button("🔄 Retry Configuration", key="retry_audio_config"):
+                            # Clear cache and retry
+                            if "elevenlabs_config_valid" in st.session_state:
+                                del st.session_state["elevenlabs_config_valid"]
+                            if "elevenlabs_config_msg" in st.session_state:
+                                del st.session_state["elevenlabs_config_msg"]
+                            st.rerun()
+            
             st.markdown('</div>', unsafe_allow_html=True)
             
             send_now = st.session_state.pop("faq_send_now", False)
@@ -1391,6 +1436,12 @@ def render():
             
             # Capture the CURRENT question IMMEDIATELY before any processing
             current_question = user_q.strip() if user_q else ""
+            
+            # Additional validation: Don't send if question is empty
+            if should_send and not current_question:
+                should_send = False
+                # Clear any stale flags
+                st.session_state["faq_send_now"] = False
 
             if send_now and st.session_state.get("faq_composer"):
                 user_q = st.session_state["faq_composer"]
@@ -1406,6 +1457,9 @@ def render():
             else:
                 st.markdown('<section class="chat-thread">', unsafe_allow_html=True)
 
+                # Track if we've seen the first assistant message (for autoplay)
+                first_assistant_seen = False
+                
                 for idx, msg in enumerate(chat):
                     role = msg["role"]
                     text = msg["text"]
@@ -1451,6 +1505,35 @@ def render():
                         # Simple container for answer
                         with st.container():
                             st.markdown(answer_md + sources_md)
+                            
+                            # Audio playback feature (if enabled and toggle is on)
+                            # Only autoplay for the FIRST assistant message (newest)
+                            if get_flag_value("FEATURE_FAQ_AUDIO") == "on" and st.session_state.get("faq_voice_enabled", False):
+                                try:
+                                    from shared.audio.tts_client import synthesize
+                                    # Use clean text without sources for audio
+                                    audio_text = _sanitize_to_md(text) if not is_html else text
+                                    audio_bytes = synthesize(audio_text)
+                                    
+                                    if audio_bytes:
+                                        # Only autoplay the first (newest) message
+                                        should_autoplay = not first_assistant_seen
+                                        st.audio(audio_bytes, format="audio/mp3", autoplay=should_autoplay)
+                                        first_assistant_seen = True
+                                        
+                                        # Log audio playback
+                                        from core.events import log_event
+                                        log_event("faq_audio_played", {
+                                            "query": msg.get("user_query", ""),
+                                            "text_length": len(audio_text),
+                                            "autoplay": should_autoplay
+                                        })
+                                    else:
+                                        st.caption("⚠️ Audio unavailable")
+                                except Exception as e:
+                                    st.caption("⚠️ Audio unavailable")
+                                    # Log error (optional - can be removed if not needed)
+                                    print(f"[FAQ_AUDIO] Error in audio playback: {e}")
 
                         with st.container():
                             st.markdown('<div class="chat-sentinel chat-action-sentinel"></div>', unsafe_allow_html=True)

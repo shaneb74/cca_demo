@@ -1,12 +1,13 @@
 """
 Smart Community Matching Engine - AI-powered facility recommendations
-Replaces QuickBase's 132-field community spreadsheet with intelligent matching
+Enhanced with customer preferences collection for personalized matching
 """
 import streamlit as st
 import json
 from pathlib import Path
 from core.adapters.streamlit_crm import get_all_crm_customers, get_crm_customer_by_id
 from shared.data_access.quickbase_client import quickbase_client
+from core.preferences import PreferencesManager
 
 def inject_matching_css():
     """Professional community matching styling"""
@@ -292,6 +293,31 @@ def inject_matching_css():
         color: #6b7280;
         margin: 0;
     }
+    
+    /* Preferences section styling */
+    .preferences-section {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e9d5ff;
+    }
+    
+    .preferences-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #7c3aed;
+        margin: 0 0 0.75rem 0;
+    }
+    
+    .preferences-details {
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: #374151;
+    }
+    
+    .preferences-details strong {
+        color: #581c87;
+    }
+    
     </style>
     """
     
@@ -302,23 +328,240 @@ def load_community_database():
     """Load community data from QuickBase WA Communities table"""
     return quickbase_client.get_communities()
 
+def calculate_match_score(customer_data, community):
+    """Enhanced AI-powered matching algorithm with customer preferences integration"""
+    score = 0
+    reasons = []
+    
+    # Get customer preferences if available
+    preferences = PreferencesManager.get_preferences()
+    pref_data = PreferencesManager.get_crm_matching_data() if preferences else {}
+    
+    # Care level matching (35% weight) - Use actual recommendation which respects gating
+    care_recommendation = customer_data.get('care_recommendation', '').lower()
+    
+    if care_recommendation in community['care_levels']:
+        score += 35
+        reasons.append(f"Perfect care level match: {care_recommendation}")
+    elif any(level in care_recommendation for level in community['care_levels']):
+        score += 22
+        reasons.append(f"Compatible care levels available")
+    else:
+        reasons.append(f"Care level mismatch: needs {care_recommendation}, available {community['care_levels']}")
+    
+    # Geographic preference matching (20% weight) - NEW
+    if pref_data.get('preferred_regions'):
+        location_match = False
+        community_location = community.get('location', '').lower()
+        
+        for region in pref_data['preferred_regions']:
+            if region == 'bellevue_area' and 'bellevue' in community_location:
+                score += 20
+                reasons.append("🎯 Preferred Bellevue area location")
+                location_match = True
+                break
+            elif region == 'eastside' and any(city in community_location for city in ['bellevue', 'redmond', 'kirkland']):
+                score += 18
+                reasons.append("🎯 Preferred Eastside location")
+                location_match = True
+                break
+            elif region == 'seattle' and 'seattle' in community_location:
+                score += 18
+                reasons.append("🎯 Preferred Seattle area location")
+                location_match = True
+                break
+            elif region == 'washington_state':
+                score += 10
+                reasons.append("✓ Within preferred Washington state")
+                location_match = True
+                break
+        
+        if not location_match:
+            reasons.append("⚠️ Outside preferred geographic areas")
+    else:
+        # Default geographic bonus for Bellevue (if no preferences)
+        if 'bellevue' in community.get('location', '').lower():
+            score += 15
+            reasons.append("🏠 Bellevue location advantage")
+    
+    # Budget compatibility (20% weight) - Consider preference budget level
+    budget_min = 3000  # Default
+    budget_max = 6000  # Default
+    
+    # Adjust budget based on preferences
+    if pref_data.get('budget_level') == 'tight':
+        budget_max = 5000
+        budget_min = 2500
+    elif pref_data.get('budget_level') == 'comfortable':
+        budget_min = 4000
+        budget_max = 8000
+    elif pref_data.get('budget_level') == 'luxury':
+        budget_min = 6000
+        budget_max = 12000
+    
+    if (budget_min <= community['monthly_cost']['max'] and 
+        budget_max >= community['monthly_cost']['min']):
+        score += 20
+        reasons.append(f"Budget compatible: ${community['monthly_cost']['min']:,}-${community['monthly_cost']['max']:,}")
+    elif budget_max >= community['monthly_cost']['min']:
+        score += 10
+        reasons.append(f"Partial budget overlap available")
+    
+    # Timeline urgency matching (15% weight) - NEW
+    timeline = pref_data.get('timeline', 'exploring')
+    if timeline == 'immediate' and community['availability'] == 'immediate':
+        score += 15
+        reasons.append("🚨 Immediate availability matches urgent timeline")
+    elif timeline == '2_4_weeks' and community['availability'] in ['immediate', '2_weeks']:
+        score += 12
+        reasons.append("⏰ Availability matches 2-4 week timeline")
+    elif timeline == 'exploring' and community['availability'] == 'contact':
+        score += 8
+        reasons.append("🔍 Contact for availability - good for exploration")
+    else:
+        score += 5
+        reasons.append("✓ Standard availability consideration")
+    
+    # Availability with vacancy data (10% weight)
+    if community['availability'] == 'immediate':
+        score += 10
+        reasons.append("✅ Immediate availability")
+    elif community['availability'] == '2_weeks':
+        score += 8
+        reasons.append("⏰ Available within 2 weeks")
+    elif community['availability'] == 'waitlist':
+        score += 3
+        reasons.append("⏳ Waitlist available")
+    elif community['availability'] == 'contact':
+        score += 6
+        reasons.append("📞 Contact for availability details")
+    
+    # Bonus for specific vacancy information from QuickBase
+    if community.get('available_beds', 0) > 0:
+        score += 3
+        reasons.append(f"🛏️ {community['available_beds']} beds currently available")
+    
+    # Quality rating (5% weight)
+    if community['rating'] >= 4.7:
+        score += 5
+        reasons.append(f"Excellent rating: {community['rating']}/5")
+    elif community['rating'] >= 4.5:
+        score += 3
+        reasons.append(f"High rating: {community['rating']}/5")
+    else:
+        score += 2
+        reasons.append(f"Good rating: {community['rating']}/5")
+    
+    # Activity preferences bonus (5% weight) - NEW
+    if pref_data.get('activity_preferences'):
+        activity_match = False
+        for activity in pref_data['activity_preferences']:
+            if activity in community.get('amenities', []):
+                score += 2
+                activity_match = True
+        
+        if activity_match:
+            reasons.append("🎨 Activity preferences match available amenities")
+        else:
+            reasons.append("ℹ️ Standard amenities available")
+    
+    return min(score, 100), reasons
+
 def render_customer_context(customer_data):
-    """Render customer context for matching"""
+    """Render enhanced customer context with preferences for matching"""
     care_rec = customer_data.get('care_recommendation', 'Not assessed')
     
     # Handle different name fields from different sources
     customer_name = customer_data.get('name') or customer_data.get('person_name', 'Customer')
     
+    # Get preferences data
+    preferences = PreferencesManager.get_preferences()
+    pref_data = PreferencesManager.get_crm_matching_data() if preferences else {}
+    
+    # Build preferences summary
+    pref_summary = "Not collected"
+    if preferences:
+        completion = PreferencesManager.get_completion_percentage()
+        pref_summary = f"{completion}% complete"
+        if completion == 100:
+            pref_summary = "✅ Complete"
+    
     context_html = f"""
-    <div style="margin-bottom: 1.5rem;">
-        <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem; color: #1e293b;">
-            👤 {customer_name} - Community Matches
-        </h2>
-        <p style="margin: 0; color: #64748b;">
-            <strong>Care Need:</strong> {care_rec}
-        </p>
-    </div>
+    <div class="context-panel">
+        <div class="context-header">
+            <div class="context-icon">👤</div>
+            <h2 class="context-title">{customer_data.get('person_name', 'Customer')} - Enhanced Matching Context</h2>
+        </div>
+        <div class="context-grid">
+            <div class="context-item">
+                <div class="context-value">{care_rec}</div>
+                <div class="context-label">Care Recommendation</div>
+            </div>
+            <div class="context-item">
+                <div class="context-value">{budget_status}</div>
+                <div class="context-label">Budget Status</div>
+            </div>
+            <div class="context-item">
+                <div class="context-value">{journey_progress}</div>
+                <div class="context-label">Journey Progress</div>
+            </div>
+            <div class="context-item">
+                <div class="context-value">{readiness}</div>
+                <div class="context-label">Readiness Level</div>
+            </div>
+            <div class="context-item">
+                <div class="context-value">{pref_summary}</div>
+                <div class="context-label">Preferences Data</div>
+            </div>
+        </div>
     """
+    
+    # Add preferences details if available
+    if preferences and pref_data:
+        pref_details = []
+        
+        if pref_data.get('preferred_regions'):
+            regions = ", ".join([r.replace('_', ' ').title() for r in pref_data['preferred_regions'][:3]])
+            if len(pref_data['preferred_regions']) > 3:
+                regions += f" +{len(pref_data['preferred_regions']) - 3} more"
+            pref_details.append(f"📍 <strong>Preferred areas:</strong> {regions}")
+        
+        if pref_data.get('timeline') and pref_data['timeline'] != 'exploring':
+            timeline_map = {
+                'immediate': 'Immediate (within 2 weeks)',
+                '2_4_weeks': '2-4 weeks',
+                '2_3_months': '2-3 months',
+                'future_planning': 'Future planning'
+            }
+            timeline_text = timeline_map.get(pref_data['timeline'], pref_data['timeline'])
+            pref_details.append(f"⏰ <strong>Timeline:</strong> {timeline_text}")
+        
+        if pref_data.get('budget_level') and pref_data['budget_level'] != 'moderate':
+            budget_map = {
+                'tight': 'Budget-conscious',
+                'comfortable': 'Comfortable budget', 
+                'luxury': 'Premium/luxury options'
+            }
+            budget_text = budget_map.get(pref_data['budget_level'], pref_data['budget_level'])
+            pref_details.append(f"💰 <strong>Budget level:</strong> {budget_text}")
+        
+        if pref_data.get('activity_preferences'):
+            activities = ", ".join([a.replace('_', ' ').title() for a in pref_data['activity_preferences'][:3]])
+            if len(pref_data['activity_preferences']) > 3:
+                activities += f" +{len(pref_data['activity_preferences']) - 3} more"
+            pref_details.append(f"🎨 <strong>Activity interests:</strong> {activities}")
+        
+        if pref_details:
+            context_html += f"""
+            <div class="preferences-section">
+                <h3 class="preferences-title">Customer Preferences</h3>
+                <div class="preferences-details">
+                    {' • '.join(pref_details)}
+                </div>
+            </div>
+            """
+    
+    context_html += """</div>"""
     
     return context_html
 
