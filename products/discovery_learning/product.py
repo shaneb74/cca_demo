@@ -73,7 +73,7 @@ def render():
             <div class="card-body">
                 <div class="video-wrapper">
                     <iframe class="video-iframe"
-                        src="https://www.youtube.com/watch?v=c_nbkkHKqac"
+                        src="https://www.youtube.com/embed/c_nbkkHKqac"
                         title="Learn About Senior Navigator"
                         frameborder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
