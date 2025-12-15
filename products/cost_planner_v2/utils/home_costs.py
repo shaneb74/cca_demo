@@ -197,7 +197,7 @@ def lookup_zip(zip_code: str, kind: str = "owner") -> dict | None:
     exact = df_kind[df_kind["zip"] == zip_code]
 
     if not exact.empty:
-        amount = float(exact.iloc[0]["amount"])
+        amount = float(exact.iloc[0]["amount"]) * 2.0  # Multiply by 2 to reflect full household costs
         return {
             "amount": amount,
             "source": "ZIP exact match",
@@ -210,7 +210,7 @@ def lookup_zip(zip_code: str, kind: str = "owner") -> dict | None:
     zip3_matches = df_kind[df_kind["zip"].str.startswith(zip3)]
 
     if not zip3_matches.empty:
-        amount = float(zip3_matches["amount"].median())
+        amount = float(zip3_matches["amount"].median()) * 2.0  # Multiply by 2 to reflect full household costs
         return {
             "amount": amount,
             "source": f"ZIP3 bucket ({zip3}xx)",
