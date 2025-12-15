@@ -3,7 +3,7 @@
   "title": "Home & Living Situation",
   "icon": "🏠",
   "description": "Housing costs and home ownership details for {NAME}",
-  "estimated_time": "2-3 min",
+  "estimated_time": "1-2 min",
   "required": false,
   "sort_order": 6,
   "sections": [
@@ -17,13 +17,13 @@
       "info_boxes": [
         {
           "type": "info",
-          "content": "This helps us determine housing costs for in-home care, and whether home equity could fund care if needed."
+          "content": "This helps us understand housing costs for in-home care, and whether home equity could fund care if needed."
         }
       ]
     },
     {
-      "id": "housing_status",
-      "title": "Current Housing",
+      "id": "housing_details",
+      "title": "Housing",
       "icon": "🏠",
       "layout": "single_column",
       "fields": [
@@ -43,27 +43,13 @@
             },
             {
               "value": "other",
-              "label": "Other (living with family, assisted living, etc.)"
+              "label": "Other (living with family, etc.)"
             }
           ],
           "default": "own"
-        }
-      ],
-      "info_boxes": []
-    },
-    {
-      "id": "homeowner_costs",
-      "title": "Monthly Housing Costs",
-      "icon": "💰",
-      "layout": "single_column",
-      "visible_if": {
-        "section": "housing_status",
-        "field": "housing_type",
-        "equals": "own"
-      },
-      "fields": [
+        },
         {
-          "key": "use_zip_estimate_owner",
+          "key": "use_zip_estimate",
           "label": "Do you know {NAME_POS} total monthly housing costs?",
           "type": "radio",
           "required": false,
@@ -78,10 +64,14 @@
             }
           ],
           "default": "no_estimate",
-          "help": "Include mortgage, property taxes, insurance, utilities, and maintenance"
+          "help": "Include mortgage/rent, taxes, insurance, utilities, maintenance",
+          "visible_if": {
+            "field": "housing_type",
+            "not_equals": "other"
+          }
         },
         {
-          "key": "monthly_housing_costs_owner",
+          "key": "monthly_housing_costs",
           "label": "Total Monthly Housing Costs",
           "type": "currency",
           "required": false,
@@ -89,26 +79,12 @@
           "max": 50000,
           "step": 100,
           "default": 0,
-          "help": "All housing costs: mortgage, taxes, insurance, utilities, maintenance, HOA",
+          "help": "All housing costs: mortgage/rent, taxes, insurance, utilities, maintenance",
           "visible_if": {
-            "field": "use_zip_estimate_owner",
+            "field": "use_zip_estimate",
             "equals": "yes_i_know"
           }
-        }
-      ],
-      "info_boxes": []
-    },
-    {
-      "id": "homeowner_equity",
-      "title": "Home Equity",
-      "icon": "🏡",
-      "layout": "single_column",
-      "visible_if": {
-        "section": "housing_status",
-        "field": "housing_type",
-        "equals": "own"
-      },
-      "fields": [
+        },
         {
           "key": "home_equity",
           "label": "Estimated Home Equity",
@@ -118,7 +94,11 @@
           "max": 10000000,
           "step": 25000,
           "default": 0,
-          "help": "Current home value minus outstanding mortgage balance (enter 0 if not sure)"
+          "help": "Current home value minus mortgage (enter 0 if not sure)",
+          "visible_if": {
+            "field": "housing_type",
+            "equals": "own"
+          }
         },
         {
           "key": "home_plan",
@@ -128,105 +108,40 @@
           "options": [
             {
               "value": "keep_stay",
-              "label": "Stay in the home with in-home care"
+              "label": "Stay in the home with in-home care (keep paying housing costs)"
             },
             {
               "value": "sell",
-              "label": "Sell the home to fund care costs"
+              "label": "Sell the home and use equity to fund care"
+            },
+            {
+              "value": "reverse_mortgage",
+              "label": "Use a reverse mortgage or home equity loan to fund care"
             },
             {
               "value": "keep_rent",
-              "label": "Keep the home and rent it out"
+              "label": "Keep the home and rent it out for income"
             },
             {
               "value": "uncertain",
               "label": "Not sure yet"
             }
           ],
-          "default": "uncertain"
-        }
-      ],
-      "info_boxes": [
-        {
-          "type": "tip",
-          "content": "💡 Home equity can be a valuable resource for funding care. If staying home, the monthly costs continue. If moving to a facility, selling or renting provides funds."
-        }
-      ]
-    },
-    {
-      "id": "renter_costs",
-      "title": "Monthly Rental Costs",
-      "icon": "💰",
-      "layout": "single_column",
-      "visible_if": {
-        "section": "housing_status",
-        "field": "housing_type",
-        "equals": "rent"
-      },
-      "fields": [
-        {
-          "key": "use_zip_estimate_renter",
-          "label": "Do you know {NAME_POS} total monthly rent and household costs?",
-          "type": "radio",
-          "required": false,
-          "options": [
-            {
-              "value": "yes_i_know",
-              "label": "Yes, I know the costs"
-            },
-            {
-              "value": "no_estimate",
-              "label": "No - use estimate for my ZIP code"
-            }
-          ],
-          "default": "no_estimate",
-          "help": "Include rent, renter's insurance, and utilities"
-        },
-        {
-          "key": "monthly_housing_costs_renter",
-          "label": "Total Monthly Rental Costs",
-          "type": "currency",
-          "required": false,
-          "min": 0,
-          "max": 25000,
-          "step": 100,
-          "default": 0,
-          "help": "Total: rent + insurance + utilities not included in rent",
+          "default": "uncertain",
           "visible_if": {
-            "field": "use_zip_estimate_renter",
-            "equals": "yes_i_know"
+            "field": "housing_type",
+            "equals": "own"
           }
         },
         {
-          "key": "lease_status",
-          "label": "Lease Status",
-          "type": "radio",
-          "required": false,
-          "options": [
-            {
-              "value": "month_to_month",
-              "label": "Month-to-month"
-            },
-            {
-              "value": "active_lease",
-              "label": "Active lease with time remaining"
-            },
-            {
-              "value": "section8",
-              "label": "Section 8 / subsidized housing"
-            }
-          ],
-          "default": "month_to_month"
-        },
-        {
           "key": "rental_plan",
-          "label": "If {NAME} needs care, what's the plan?",
+          "label": "If {NAME} needs care, what happens with the rental?",
           "type": "radio",
           "required": false,
           "options": [
             {
               "value": "keep_in_home",
-              "label": "Keep renting and receive in-home care"
+              "label": "Keep renting and receive in-home care (rent continues)"
             },
             {
               "value": "end_lease",
@@ -237,13 +152,17 @@
               "label": "Not sure yet"
             }
           ],
-          "default": "uncertain"
+          "default": "uncertain",
+          "visible_if": {
+            "field": "housing_type",
+            "equals": "rent"
+          }
         }
       ],
       "info_boxes": [
         {
           "type": "tip",
-          "content": "💡 If {NAME} receives in-home care, rent continues. If moving to a facility, ending the lease frees up those funds for care."
+          "content": "💡 Home equity can fund care through selling, reverse mortgage, or rental income. If staying home for care, housing costs continue."
         }
       ]
     }
@@ -251,19 +170,16 @@
   "calculations": {
     "total_monthly_housing_costs": {
       "type": "conditional",
-      "description": "Total monthly housing costs based on ownership status",
-      "logic": "Use monthly_housing_costs_owner if owner, monthly_housing_costs_renter if renter, or ZIP estimate if selected"
+      "description": "Total monthly housing costs - user entered or ZIP estimate",
+      "logic": "Use monthly_housing_costs if entered, otherwise apply ZIP estimate based on use_zip_estimate"
     }
   },
   "field_types": {
     "housing_type": "string",
-    "use_zip_estimate_owner": "string",
-    "monthly_housing_costs_owner": "number",
+    "use_zip_estimate": "string",
+    "monthly_housing_costs": "number",
     "home_equity": "number",
     "home_plan": "string",
-    "use_zip_estimate_renter": "string",
-    "monthly_housing_costs_renter": "number",
-    "lease_status": "string",
     "rental_plan": "string"
   }
 }
