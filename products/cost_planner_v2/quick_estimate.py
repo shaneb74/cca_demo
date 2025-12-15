@@ -485,6 +485,7 @@ def render():
         st.session_state.comparison_facility_breakdown = None
     if "comparison_inhome_breakdown" not in st.session_state:
         st.session_state.comparison_inhome_breakdown = None
+    # Home carry is no longer used in comparison view - collected in Home & Living Situation assessment instead
     if "comparison_home_carry_cost" not in st.session_state:
         st.session_state.comparison_home_carry_cost = 0.0
     if "comparison_keep_home" not in st.session_state:
@@ -870,29 +871,8 @@ def _render_home_card(zip_code: str):
         st.rerun()
 
     st.markdown("")
-
-    # Home Expense (always included for in-home)
-    st.markdown('<div class="cost-section__label">🏠 Home Expense</div>', unsafe_allow_html=True)
-    prefill_value = st.session_state.comparison_home_carry_cost
-
-    home_carry = st.number_input(
-        "Monthly home expense",
-        min_value=0.0,
-        value=prefill_value,
-        step=100.0,
-        help="Mortgage, rent, property tax, insurance, maintenance",
-        key="qe_home_carry",
-        label_visibility="visible"
-    )
-
-    if home_carry != st.session_state.comparison_home_carry_cost:
-        st.session_state.comparison_home_carry_cost = home_carry
-        st.rerun()
-
-    st.markdown(f'<span class="cp-chip">✓ Included in total (${home_carry:,.0f}/mo)</span>', unsafe_allow_html=True)
-
-    st.markdown("")
-    st.caption("Actual costs vary by caregiver rates and location.")
+    st.caption("💡 Housing costs will be assessed separately in the financial planning section.")
+    st.caption("Actual caregiver rates vary by location and qualifications.")
 
     st.markdown('</div>', unsafe_allow_html=True)
 

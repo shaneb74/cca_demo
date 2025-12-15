@@ -190,14 +190,14 @@
       "info_boxes": []
     },
     {
-      "id": "real_estate_gateway",
-      "title": "Real Estate & Other",
+      "id": "real_estate_other",
+      "title": "Investment Real Estate",
       "icon": "🏠",
       "layout": "single_column",
       "fields": [
         {
-          "key": "has_real_estate",
-          "label": "Do you have home equity or other real estate?",
+          "key": "has_real_estate_other",
+          "label": "Do you own investment or rental properties (other than primary residence)?",
           "type": "radio",
           "required": false,
           "options": [
@@ -213,37 +213,27 @@
           "default": "no"
         },
         {
-          "key": "home_equity_estimate",
-          "label": "Home Equity (Estimate)",
-          "type": "currency",
-          "required": false,
-          "min": 0,
-          "max": 50000000,
-          "step": 25000,
-          "default": 0,
-          "help": "Estimated home value minus outstanding mortgage",
-          "visible_if": {
-            "field": "has_real_estate",
-            "equals": "yes"
-          }
-        },
-        {
           "key": "real_estate_other",
-          "label": "Real Estate - Other Property",
+          "label": "Investment Properties Value",
           "type": "currency",
           "required": false,
           "min": 0,
           "max": 50000000,
           "step": 25000,
           "default": 0,
-          "help": "Rental properties, vacation homes, land, etc.",
+          "help": "Rental properties, vacation homes, land, commercial real estate (exclude primary residence)",
           "visible_if": {
-            "field": "has_real_estate",
+            "field": "has_real_estate_other",
             "equals": "yes"
           }
         }
       ],
-      "info_boxes": []
+      "info_boxes": [
+        {
+          "type": "info",
+          "content": "💡 Primary residence details are collected in the Home & Living Situation assessment."
+        }
+      ]
     },
     {
       "id": "debts_obligations_gateway",
@@ -268,21 +258,7 @@
           ],
           "default": "no"
         },
-        {
-          "key": "primary_residence_mortgage",
-          "label": "Second Mortgage / HELOC Balance",
-          "type": "currency",
-          "required": false,
-          "min": 0,
-          "max": 10000000,
-          "step": 5000,
-          "default": 0,
-          "help": "Home equity lines of credit or second mortgages on primary residence",
-          "visible_if": {
-            "field": "has_debts",
-            "equals": "yes"
-          }
-        },
+
         {
           "key": "other_real_estate_debt",
           "label": "Other Real Estate Debt",
@@ -357,11 +333,9 @@
     "retirement_traditional": "number",
     "retirement_roth": "number",
     "retirement_pension_value": "number",
-    "has_real_estate": "string",
-    "home_equity_estimate": "number",
+    "has_real_estate_other": "string",
     "real_estate_other": "number",
     "has_debts": "string",
-    "primary_residence_mortgage": "number",
     "other_real_estate_debt": "number",
     "secured_loans": "number",
     "unsecured_debt": "number",
