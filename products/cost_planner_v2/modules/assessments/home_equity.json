@@ -101,15 +101,15 @@
           "options": [
             {
               "value": "keep",
-              "label": "Keep for living there / returning later"
+              "label": "Keep the home"
             },
             {
               "value": "sell",
-              "label": "Sell to fund care"
+              "label": "Sell"
             },
             {
               "value": "rent_out",
-              "label": "Rent out for income"
+              "label": "Rent out"
             },
             {
               "value": "reverse_mortgage",
@@ -117,7 +117,7 @@
             },
             {
               "value": "not_sure",
-              "label": "Not sure yet"
+              "label": "Not sure"
             }
           ],
           "default": "not_sure",
@@ -140,6 +140,22 @@
           "visible_if": {
             "field": "home_plan",
             "equals": "rent_out"
+          }
+        },
+        {
+          "key": "commission_rate",
+          "label": "Real estate commission (%)",
+          "type": "number",
+          "required": false,
+          "min": 4,
+          "max": 8,
+          "step": 0.5,
+          "default": 6,
+          "help": "Typical commissions range from 4-8%. Recent surveys show the national average is around 5.5-6%.",
+          "visible_if": {
+            "field": "home_plan",
+            "operator": "in",
+            "value": ["sell", "not_sure"]
           }
         },
         {
@@ -259,7 +275,7 @@
               "label": "Reverse mortgage (access equity without selling)"
             }
           ],
-          "help": "Select all strategies you want to compare",
+          "help": "We'll calculate realistic proceeds: sale after commission, reverse mortgage at ~50% of home value minus fees (~4%), net rental income after all costs.",
           "visible_if": {
             "field": "home_plan",
             "in": ["sell", "rent_out", "reverse_mortgage", "not_sure"]

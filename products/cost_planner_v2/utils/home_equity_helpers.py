@@ -25,8 +25,9 @@ class StrategyResult(TypedDict):
 
 
 # Constants for calculations
-DEFAULT_SELLING_FEE_PERCENT = 0.08  # 8% for agent fees, closing costs, etc.
-DEFAULT_REVERSE_MORTGAGE_PERCENT = 0.50  # 50% of home value (conservative estimate)
+DEFAULT_SELLING_FEE_PERCENT = 0.06  # 6% typical commission (national average ~5.5-6%)
+DEFAULT_REVERSE_MORTGAGE_PERCENT = 0.50  # 50% of home value (40-60% typical range)
+DEFAULT_REVERSE_MORTGAGE_FEE_PERCENT = 0.04  # 4% origination and closing fees
 DEFAULT_RENTAL_VACANCY_PERCENT = 0.08  # 8% vacancy rate
 
 
@@ -41,7 +42,7 @@ def calculate_net_sale_proceeds(
     Args:
         home_value: Current market value of the home
         mortgage_balance: Remaining mortgage balance
-        selling_fee_percent: Percentage of home value for selling costs (default 8%)
+        selling_fee_percent: Percentage of home value for selling costs (default 6%)
 
     Returns:
         Net proceeds after paying off mortgage and selling costs
@@ -59,6 +60,7 @@ def calculate_reverse_mortgage_draw(
     home_value: float,
     mortgage_balance: float,
     reverse_percent: float = DEFAULT_REVERSE_MORTGAGE_PERCENT,
+    fee_percent: float = DEFAULT_REVERSE_MORTGAGE_FEE_PERCENT,
 ) -> float:
     """
     Calculate available funds from a reverse mortgage.
@@ -66,26 +68,32 @@ def calculate_reverse_mortgage_draw(
     Args:
         home_value: Current market value of the home
         mortgage_balance: Remaining mortgage balance
-        reverse_percent: Percentage of home value available (default 50%)
+        reverse_percent: Percentage of home value available (default 50%, range 40-60%)
+        fee_percent: Origination and closing fees as percentage (default 4%)
 
     Returns:
-        Available cash from reverse mortgage after paying off existing mortgage
+        Net available cash from reverse mortgage after paying off existing mortgage and fees
 
     Note:
         This is a simplified calculation. Actual reverse mortgage amounts depend on:
-        - Borrower age
+        - Borrower age (older borrowers can access more)
         - Interest rates
         - Home value and location
         - Lender requirements
+        Fees typically run around 4% of home value for origination and closing costs.
     """
     if home_value <= 0:
         return 0.0
 
     # Maximum reverse mortgage amount (typically 40-60% of home value)
     max_reverse = home_value * reverse_percent
+    
+    # Deduct origination and closing fees (typically ~4% of home value)
+    fees = home_value * fee_percent
+    net_reverse = max_reverse - fees
 
     # Must pay off existing mortgage first
-    available_cash = max_reverse - mortgage_balance
+    available_cash = net_reverse - mortgage_balance
 
     return max(0.0, available_cash)
 
@@ -148,6 +156,7 @@ def analyze_home_equity_strategies(
     care_duration: int,
     return_home: str,
     strategy_selection: list[str],
+    commission_rate: float = 6.0,
 ) -> dict[str, StrategyResult]:
     """
     Analyze selected home equity strategies and return comparison results.
@@ -162,6 +171,7 @@ def analyze_home_equity_strategies(
         care_duration: Expected duration of care in months
         return_home: Whether returning home is a priority ("yes"/"no"/"unsure")
         strategy_selection: List of selected strategies to evaluate
+        commission_rate: Real estate commission percentage (default 6%)
 
     Returns:
         Dictionary mapping strategy names to StrategyResult objects
@@ -191,7 +201,7 @@ def analyze_home_equity_strategies(
             )
         elif strategy == "sell":
             results["sell"] = _analyze_sell_strategy(
-                home_value, mortgage_balance, care_cost, return_home
+                home_value, mortgage_balance, care_cost, return_home, commission_rate / 100.0
             )
         elif strategy == "reverse_mortgage":
             results["reverse_mortgage"] = _analyze_reverse_mortgage_strategy(
@@ -267,13 +277,15 @@ def _analyze_sell_strategy(
     mortgage_balance: float,
     care_cost: float,
     return_home: str,
+    commission_rate: float = DEFAULT_SELLING_FEE_PERCENT,
 ) -> StrategyResult:
     """Analyze the 'sell home' strategy."""
-    net_proceeds = calculate_net_sale_proceeds(home_value, mortgage_balance)
+    net_proceeds = calculate_net_sale_proceeds(home_value, mortgage_balance, commission_rate)
     months_funded = calculate_months_funded(net_proceeds, care_cost) if care_cost > 0 else 0.0
+    commission_pct = commission_rate * 100
 
     considerations = [
-        f"One-time proceeds: ${net_proceeds:,.0f}",
+        f"Net proceeds: ${net_proceeds:,.0f} (after {commission_pct:.1f}% commission)",
         f"Covers ~{months_funded:.1f} months of care" if months_funded > 0 else "Proceeds available for care costs",
         "Eliminates ongoing carrying costs",
         "Liquidates home equity completely",
@@ -304,10 +316,11 @@ def _analyze_reverse_mortgage_strategy(
     months_funded = calculate_months_funded(available_cash, care_cost) if care_cost > 0 else 0.0
 
     considerations = [
-        f"Available cash: ${available_cash:,.0f}",
+        f"Net available cash: ${available_cash:,.0f} (after ~4% fees)",
         f"Covers ~{months_funded:.1f} months of care" if months_funded > 0 else "Cash available for care costs",
         "Maintains home ownership",
         "No monthly mortgage payments required",
+        "Typically access 40-60% of home value (50% used in estimate)",
     ]
 
     if available_cash <= 0:
@@ -346,6 +359,7 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
     household_contribution_type = data.get("household_contribution_type", "no")
     monthly_household_contribution = _to_float(data.get("monthly_household_contribution", 0))
     local_rent = _to_float(data.get("local_rent", 0))
+    commission_rate = _to_float(data.get("commission_rate", 6.0))  # Default 6%
     care_cost = _to_float(data.get("care_cost", 0))
     care_duration = int(_to_float(data.get("care_duration", 0)))
     return_home = data.get("return_home", "unsure")
@@ -384,11 +398,14 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
     equity_available = 0.0
     sale_proceeds = 0.0
     
+    # Convert commission rate percentage to decimal
+    commission_decimal = commission_rate / 100.0
+    
     if owns_home == "own" and home_value > 0:
         home_equity = home_value - mortgage_balance
         equity_available = max(0.0, home_equity)
-        # Calculate potential sale proceeds
-        sale_proceeds = calculate_net_sale_proceeds(home_value, mortgage_balance)
+        # Calculate potential sale proceeds using user's commission rate
+        sale_proceeds = calculate_net_sale_proceeds(home_value, mortgage_balance, commission_decimal)
 
     # Calculate strategy-specific values based on home_plan
     strategy_outputs = {}
@@ -448,6 +465,7 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
             care_duration=care_duration,
             return_home=return_home,
             strategy_selection=strategy_selection,
+            commission_rate=commission_rate,
         )
 
     return {
@@ -460,6 +478,7 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
         "household_contribution_type": household_contribution_type,
         "monthly_household_contribution": monthly_household_contribution,
         "local_rent": local_rent,
+        "commission_rate": commission_rate,
         "care_cost": care_cost,
         "care_duration": care_duration,
         "return_home": return_home,
