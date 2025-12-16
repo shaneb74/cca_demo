@@ -151,6 +151,21 @@
           "ui": { "widget": "chip", "orientation": "vertical" }
         },
         {
+          "id": "transfers",
+          "type": "string",
+          "select": "single",
+          "label": "Does {NAME} need help moving from bed/chair/toilet?",
+          "required": true,
+          "options": [
+            { "label": "No assistance needed", "value": "independent", "score": 0 },
+            { "label": "Stand-by assist (verbal cues only)", "value": "standby", "score": 1, "flags": ["transfer_standby"] },
+            { "label": "1-person physical assist", "value": "one_person", "score": 2, "flags": ["transfer_assistance_1person", "moderate_mobility"] },
+            { "label": "2-person assist required", "value": "two_person", "score": 3, "flags": ["transfer_assistance_2person", "high_mobility_dependence"] },
+            { "label": "Mechanical lift needed", "value": "lift", "score": 4, "flags": ["transfer_lift_required", "high_mobility_dependence"] }
+          ],
+          "ui": { "widget": "chip", "orientation": "vertical" }
+        },
+        {
           "id": "falls",
           "type": "string",
           "select": "single",
@@ -334,6 +349,20 @@
           }
         },
         {
+          "id": "incontinence",
+          "type": "string",
+          "select": "single",
+          "label": "Does {NAME} need help with bladder or bowel management?",
+          "required": true,
+          "options": [
+            { "label": "No issues", "value": "none", "score": 0 },
+            { "label": "Occasional accidents", "value": "occasional", "score": 1, "flags": ["incontinence_occasional"] },
+            { "label": "Frequent - needs reminders", "value": "frequent_reminders", "score": 2, "flags": ["incontinence_management"] },
+            { "label": "Complete assistance needed", "value": "complete", "score": 3, "flags": ["incontinence_management", "high_dependence"] }
+          ],
+          "ui": { "widget": "chip", "orientation": "vertical" }
+        },
+        {
           "id": "iadls",
           "type": "string",
           "select": "multi",
@@ -371,6 +400,20 @@
           "ui": { "widget": "chip", "orientation": "vertical" }
         },
         {
+          "id": "days_per_week",
+          "type": "string",
+          "select": "single",
+          "label": "How many days per week is care typically needed?",
+          "required": true,
+          "options": [
+            { "label": "1-2 days (occasional/respite)", "value": "1-2", "score": 1, "flags": ["respite_schedule"] },
+            { "label": "3-4 days (part-time)", "value": "3-4", "score": 2, "flags": ["part_time_schedule"] },
+            { "label": "5-6 days (near-daily)", "value": "5-6", "score": 3, "flags": ["regular_schedule"] },
+            { "label": "7 days (every day)", "value": "7", "score": 4, "flags": ["daily_schedule"] }
+          ],
+          "ui": { "widget": "chip", "orientation": "horizontal" }
+        },
+        {
           "id": "primary_support",
           "type": "string",
           "select": "single",
@@ -390,13 +433,6 @@
       "id": "move_preferences",
       "title": "Move Preferences",
       "description": "Help us understand this person's openness to moving to a care facility.",
-      "show_if": {
-        "any": [
-          { "key": "gcp_recommendation_category", "equals": "assisted_living" },
-          { "key": "gcp_recommendation_category", "equals": "memory_care" },
-          { "key": "gcp_recommendation_category", "equals": "memory_care_high_acuity" }
-        ]
-      },
       "navi_guidance": {
         "section_purpose": "Almost there — one more question before your personalized recommendation.",
         "why_this_matters": "Willingness to move affects care planning and family dynamics",
