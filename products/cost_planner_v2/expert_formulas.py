@@ -616,31 +616,68 @@ def calculate_asset_breakdown(
         )
 
     # ==== 5. HOME EQUITY ====
-    home_equity = profile.primary_residence_value - profile.primary_residence_mortgage_balance
-    if home_equity > 50000:  # Only show if substantial equity
-        # Reverse mortgage typically provides ~60% of home value (age 62+)
-        # Assume user is 62+ for now (would use actual age in production)
-        accessible = home_equity * 0.60
+    # Use Home & Housing module data (preferred) or fall back to old assets data
+    home_equity = profile.home_equity if profile.home_equity > 0 else (
+        profile.primary_residence_value - profile.primary_residence_mortgage_balance
+    )
+    
+    if home_equity > 0 and profile.owns_home == "own":  # Show if any equity and owns home
+        # Calculate accessible value based on selected strategy
+        home_plan = profile.home_plan
+        strategy_outputs = profile.home_equity_strategy_outputs
+        
+        if home_plan == "sell" and strategy_outputs:
+            # Use actual net proceeds from sale calculation
+            accessible = strategy_outputs.get("net_proceeds", home_equity * 0.90)
+            timeframe = "3-6_months"
+            notes = f"Net after {profile.commission_rate:.1f}% commission and closing costs"
+        elif home_plan == "reverse_mortgage" and strategy_outputs:
+            # Use lump sum from reverse mortgage calculation
+            accessible = strategy_outputs.get("lump_sum_available", home_equity * 0.60)
+            timeframe = "1-3_months"
+            notes = "Reverse mortgage lump sum (or monthly draw available)"
+        elif home_plan == "rent_out" and strategy_outputs:
+            # Rental income provides monthly flow, not lump sum - show equity value
+            accessible = home_equity * 0.80  # HELOC potential
+            timeframe = "3-6_months"
+            notes = "HELOC against equity while renting (rental income not included here)"
+        else:
+            # Keep or not sure - default to reverse mortgage potential
+            accessible = home_equity * 0.60
+            timeframe = "3-6_months"
+            notes = "Reverse mortgage, HELOC, or sale potential"
 
-        # Smart exclusion: Don't recommend selling home for in-home care
-        if is_in_home_care:
+        # Smart recommendation based on care type and strategy
+        if is_in_home_care and home_plan == "sell":
             recommended = False
-            reason = "❌ Not recommended - home needed for in-home care"
+            reason = "Not recommended - home needed for in-home care"
+        elif is_in_home_care and home_plan in ("keep", "not_sure"):
+            recommended = False
+            reason = "Consider reverse mortgage or HELOC to access equity while staying home"
+        elif home_plan == "sell" and not is_in_home_care:
+            recommended = True
+            reason = "Planned sale provides substantial funds for care"
+        elif home_plan == "reverse_mortgage":
+            recommended = True
+            reason = "Reverse mortgage allows aging in place while accessing equity"
+        elif home_equity > 200000:
+            recommended = True
+            reason = "Substantial equity available through sale, reverse mortgage, or HELOC"
         else:
             recommended = True
-            reason = "Reverse mortgage or sale available for facility care"
+            reason = "Multiple options to access equity"
 
         categories["home_equity"] = AssetCategory(
             name="home_equity",
-            display_name="🏠 Home Equity",
+            display_name="Home Equity",
             current_balance=home_equity,
             accessible_value=accessible,
             is_liquid=False,
-            liquidation_timeframe="3-6_months",
+            liquidation_timeframe=timeframe,
             recommended=recommended,
             recommendation_reason=reason,
             tax_implications="none",
-            notes="Reverse mortgage, HELOC, or sale options",
+            notes=notes,
         )
 
     # ==== 6. OTHER REAL ESTATE ====

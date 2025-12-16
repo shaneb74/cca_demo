@@ -93,6 +93,17 @@ class FinancialProfile:
     has_private_insurance: bool = False
     private_insurance_premium_monthly: float = 0.0
 
+    # ==== HOME EQUITY & HOUSING ====
+    owns_home: str = "other"  # own, rent, other
+    home_value: float = 0.0
+    mortgage_balance: float = 0.0
+    monthly_carry: float = 0.0
+    home_plan: str = "not_sure"  # keep, sell, rent_out, reverse_mortgage, not_sure
+    commission_rate: float = 6.0  # For sell option
+    reverse_mortgage_monthly_draw: float = 0.0
+    home_equity: float = 0.0  # Calculated: home_value - mortgage_balance
+    home_equity_strategy_outputs: dict[str, Any] = field(default_factory=dict)  # From helpers
+    
     # ==== LIFE INSURANCE ====
     has_life_insurance: str = "no"
     life_insurance_type: str | None = None
@@ -273,6 +284,23 @@ def build_financial_profile(product_key: str = "cost_planner_v2") -> FinancialPr
         profile.total_accessible_life_value = (
             profile.life_insurance_cash_value + profile.annuity_current_value
         )
+
+    # ==== HOME EQUITY & HOUSING ASSESSMENT ====
+    home_equity_data = assessments_state.get("home_equity", {})
+    if home_equity_data:
+        profile.owns_home = home_equity_data.get("owns_home", "other")
+        profile.home_value = float(home_equity_data.get("home_value", 0.0))
+        profile.mortgage_balance = float(home_equity_data.get("mortgage_balance", 0.0))
+        profile.monthly_carry = float(home_equity_data.get("monthly_carry", 0.0))
+        profile.home_plan = home_equity_data.get("home_plan", "not_sure")
+        profile.commission_rate = float(home_equity_data.get("commission_rate", 6.0))
+        profile.reverse_mortgage_monthly_draw = float(
+            home_equity_data.get("reverse_mortgage_monthly_draw", 0.0)
+        )
+        # Calculate equity
+        profile.home_equity = max(profile.home_value - profile.mortgage_balance, 0.0)
+        # Get strategy outputs if available
+        profile.home_equity_strategy_outputs = home_equity_data.get("strategy_outputs", {})
 
     # ==== VA BENEFITS ASSESSMENT (optional - flag-gated) ====
     va_data = assessments_state.get("va_benefits", {})
