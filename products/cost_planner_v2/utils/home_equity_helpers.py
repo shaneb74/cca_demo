@@ -153,7 +153,7 @@ def analyze_home_equity_strategies(
     Analyze selected home equity strategies and return comparison results.
 
     Args:
-        owns_home: Whether the person owns a home (bool or "yes"/"no")
+        owns_home: Whether the person owns a home (bool or "yes"/"no"/"own")
         home_value: Current market value of the home
         mortgage_balance: Remaining mortgage balance
         monthly_carry: Monthly carrying costs
@@ -170,7 +170,7 @@ def analyze_home_equity_strategies(
 
     # Normalize owns_home to boolean
     if isinstance(owns_home, str):
-        owns_home = owns_home.lower() == "yes"
+        owns_home = owns_home.lower() in ("yes", "own")
 
     if not owns_home:
         return results
@@ -338,7 +338,7 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
         Normalized data dictionary with computed values
     """
     # Extract raw values
-    owns_home = data.get("owns_home", "no")
+    owns_home = data.get("owns_home", "other")
     home_value = _to_float(data.get("home_value", 0))
     mortgage_balance = _to_float(data.get("mortgage_balance", 0))
     monthly_carry = _to_float(data.get("monthly_carry", 0))
@@ -346,23 +346,28 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
     care_cost = _to_float(data.get("care_cost", 0))
     care_duration = int(_to_float(data.get("care_duration", 0)))
     return_home = data.get("return_home", "unsure")
+    analyze_strategies = data.get("analyze_strategies", "no")
     strategy_selection = data.get("strategy_selection", [])
+    home_plan = data.get("home_plan", "uncertain")
+    rental_plan = data.get("rental_plan", "uncertain")
 
     # Compute home equity
     home_equity = home_value - mortgage_balance if home_value > 0 else 0.0
 
-    # Analyze strategies
-    strategies = analyze_home_equity_strategies(
-        owns_home=owns_home,
-        home_value=home_value,
-        mortgage_balance=mortgage_balance,
-        monthly_carry=monthly_carry,
-        local_rent=local_rent,
-        care_cost=care_cost,
-        care_duration=care_duration,
-        return_home=return_home,
-        strategy_selection=strategy_selection,
-    )
+    # Only analyze strategies if user opted in
+    strategies = {}
+    if analyze_strategies == "yes" and strategy_selection:
+        strategies = analyze_home_equity_strategies(
+            owns_home=owns_home,
+            home_value=home_value,
+            mortgage_balance=mortgage_balance,
+            monthly_carry=monthly_carry,
+            local_rent=local_rent,
+            care_cost=care_cost,
+            care_duration=care_duration,
+            return_home=return_home,
+            strategy_selection=strategy_selection,
+        )
 
     return {
         # Raw inputs
@@ -374,7 +379,10 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
         "care_cost": care_cost,
         "care_duration": care_duration,
         "return_home": return_home,
+        "analyze_strategies": analyze_strategies,
         "strategy_selection": strategy_selection,
+        "home_plan": home_plan,
+        "rental_plan": rental_plan,
         # Computed values
         "home_equity": home_equity,
         "strategies": strategies,

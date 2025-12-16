@@ -1,0 +1,289 @@
+{
+  "key": "home_equity",
+  "title": "Home & Housing Analysis",
+  "icon": "🏠",
+  "description": "Housing situation and home equity strategy for {NAME}",
+  "estimated_time": "2-4 min",
+  "required": false,
+  "sort_order": 6,
+  "sections": [
+    {
+      "id": "intro",
+      "type": "intro",
+      "title": "Home & Housing Analysis",
+      "icon": "🏠",
+      "help_text": "Let's understand {NAME_POS} housing situation. If you own a home, we can also help you evaluate strategies to use home equity for care funding.",
+      "fields": [],
+      "info_boxes": [
+        {
+          "type": "info",
+          "content": "Start with basic housing information. If you own a home and want to explore funding options, you can optionally evaluate strategies like selling, renting, or reverse mortgage."
+        }
+      ]
+    },
+    {
+      "id": "housing_facts",
+      "title": "Housing Profile",
+      "icon": "🏠",
+      "layout": "single_column",
+      "fields": [
+        {
+          "key": "owns_home",
+          "label": "Does {NAME} currently own or rent their home?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            {
+              "value": "own",
+              "label": "Own a home"
+            },
+            {
+              "value": "rent",
+              "label": "Rent"
+            },
+            {
+              "value": "other",
+              "label": "Other (living with family, etc.)"
+            }
+          ],
+          "default": "own"
+        },
+        {
+          "key": "home_value",
+          "label": "Current market value of the home",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 10000000,
+          "step": 10000,
+          "default": 0,
+          "help": "Estimated current market value (best guess is fine)",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "own"
+          }
+        },
+        {
+          "key": "mortgage_balance",
+          "label": "Remaining mortgage balance",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 10000000,
+          "step": 5000,
+          "default": 0,
+          "help": "Total amount left on the mortgage (0 if paid off)",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "own"
+          }
+        },
+        {
+          "key": "monthly_carry",
+          "label": "Monthly housing costs",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 50000,
+          "step": 100,
+          "default": 0,
+          "help": "Total monthly costs: mortgage/rent, taxes, insurance, HOA, utilities, maintenance",
+          "visible_if": {
+            "field": "owns_home",
+            "not_equals": "other"
+          }
+        },
+        {
+          "key": "home_plan",
+          "label": "What are you considering doing with the home?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            {
+              "value": "stay",
+              "label": "Keep for living there / returning later"
+            },
+            {
+              "value": "sell",
+              "label": "Sell to fund care"
+            },
+            {
+              "value": "rent_out",
+              "label": "Rent out for income"
+            },
+            {
+              "value": "reverse_mortgage",
+              "label": "Reverse mortgage"
+            },
+            {
+              "value": "uncertain",
+              "label": "Not sure yet"
+            }
+          ],
+          "default": "uncertain",
+          "help": "This is just initial thinking - you can explore options below",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "own"
+          }
+        },
+        {
+          "key": "rental_plan",
+          "label": "What are you planning with the rental?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            {
+              "value": "keep",
+              "label": "Keep the lease / stay"
+            },
+            {
+              "value": "end_lease",
+              "label": "End lease when care starts"
+            },
+            {
+              "value": "uncertain",
+              "label": "Not sure yet"
+            }
+          ],
+          "default": "uncertain",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "rent"
+          }
+        }
+      ],
+      "info_boxes": []
+    },
+    {
+      "id": "equity_analysis",
+      "title": "Home Equity Strategy Analysis",
+      "icon": "📊",
+      "layout": "single_column",
+      "fields": [
+        {
+          "key": "analyze_strategies",
+          "label": "Would you like to evaluate specific home equity strategies?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            {
+              "value": "yes",
+              "label": "Yes - compare strategies to fund care"
+            },
+            {
+              "value": "no",
+              "label": "No - just record basic housing info for now"
+            }
+          ],
+          "default": "no",
+          "help": "This optional analysis helps compare options like selling, renting, or reverse mortgage",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "own"
+          }
+        },
+        {
+          "key": "strategy_selection",
+          "label": "Which strategies would you like to compare?",
+          "type": "checkbox",
+          "required": false,
+          "options": [
+            {
+              "value": "keep",
+              "label": "Keep the home (maintain ownership)"
+            },
+            {
+              "value": "rent",
+              "label": "Rent out the home (generate income)"
+            },
+            {
+              "value": "sell",
+              "label": "Sell the home (liquidate equity)"
+            },
+            {
+              "value": "reverse_mortgage",
+              "label": "Reverse mortgage (access equity without selling)"
+            }
+          ],
+          "help": "Select all strategies you want to compare",
+          "visible_if": {
+            "field": "analyze_strategies",
+            "equals": "yes"
+          }
+        },
+        {
+          "key": "local_rent",
+          "label": "Potential monthly rental income",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 50000,
+          "step": 100,
+          "default": 0,
+          "help": "Approximate monthly rent the home could generate (skip if unsure)",
+          "visible_if": {
+            "field": "analyze_strategies",
+            "equals": "yes"
+          }
+        },
+        {
+          "key": "care_cost",
+          "label": "Estimated monthly cost of care",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 50000,
+          "step": 100,
+          "default": 0,
+          "help": "Monthly care cost from your plan (if known - optional)",
+          "visible_if": {
+            "field": "analyze_strategies",
+            "equals": "yes"
+          }
+        },
+        {
+          "key": "care_duration",
+          "label": "Expected duration of care (months)",
+          "type": "number",
+          "required": false,
+          "min": 0,
+          "max": 600,
+          "step": 1,
+          "default": 0,
+          "help": "Approximate months care will be needed (e.g., 24 for 2 years)",
+          "visible_if": {
+            "field": "analyze_strategies",
+            "equals": "yes"
+          }
+        },
+        {
+          "key": "return_home",
+          "label": "Is returning to the home after care a priority?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            {
+              "value": "yes",
+              "label": "Yes - prefer to keep the home"
+            },
+            {
+              "value": "no",
+              "label": "No - can sell or rent"
+            },
+            {
+              "value": "unsure",
+              "label": "Unsure"
+            }
+          ],
+          "help": "Whether maintaining ownership is important for future return",
+          "visible_if": {
+            "field": "analyze_strategies",
+            "equals": "yes"
+          }
+        }
+      ],
+      "info_boxes": []
+    }
+  ]
+}

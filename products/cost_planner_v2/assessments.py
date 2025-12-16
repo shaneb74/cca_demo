@@ -36,7 +36,7 @@ _SINGLE_PAGE_ASSESSMENTS: set[str] = {
     "va_benefits",
     "health_insurance",
     "life_insurance",
-    "home_equity_analysis",
+    "home_equity",
 }
 
 
@@ -293,14 +293,25 @@ def _render_assessment_card(assessment: dict[str, Any], product_key: str) -> Non
                 coverage_type = data.get("health_coverage_type", "")
                 if coverage_type:
                     summary_text = coverage_type.replace("_", " ").title()
-            elif key == "home_equity_analysis":
+            elif key == "home_equity":
+                owns_home = data.get("owns_home", "other")
                 home_equity = data.get("home_equity", 0)
                 strategies = data.get("strategies", {})
                 num_strategies = len(strategies)
-                if home_equity > 0:
-                    summary_text = f"${home_equity:,.0f} equity"
+                
+                if owns_home == "own":
+                    if home_equity > 0:
+                        summary_text = f"${home_equity:,.0f} equity"
+                    else:
+                        summary_text = "Homeowner"
                     if num_strategies > 0:
                         summary_text += f" • {num_strategies} strategies"
+                elif owns_home == "rent":
+                    monthly_carry = data.get("monthly_carry", 0)
+                    if monthly_carry > 0:
+                        summary_text = f"${monthly_carry:,.0f}/mo rent"
+                    else:
+                        summary_text = "Renter"
 
     # Status text and button label
     if is_complete:
@@ -864,9 +875,11 @@ def _render_single_page_sections(
 def _render_home_equity_results(state: dict[str, Any]) -> None:
     """Render comparison table for home equity strategies."""
     
-    # Only render if user owns a home
+    # Only render if user owns a home and opted into analysis
     owns_home = state.get("owns_home")
-    if owns_home != "yes":
+    analyze_strategies = state.get("analyze_strategies")
+    
+    if owns_home != "own" or analyze_strategies != "yes":
         return
     
     # Get strategies from augmented state
@@ -1072,7 +1085,7 @@ def render_assessment_page(assessment_key: str, product_key: str = "cost_planner
     _render_progressive_sections(field_sections, state, assessment_key, product_key)
 
     # Special rendering for home equity analysis results
-    if assessment_key == "home_equity_analysis":
+    if assessment_key == "home_equity":
         _render_home_equity_results(state)
 
     # Calculate and show total at bottom using summary config from assessment
@@ -1485,7 +1498,7 @@ def _augment_assessment_state(assessment_key: str, state: dict[str, Any]) -> dic
         )
         return normalized
 
-    if assessment_key == "home_equity_analysis":
+    if assessment_key == "home_equity":
         normalized = normalize_home_equity_data(base_state)
         return normalized
 
