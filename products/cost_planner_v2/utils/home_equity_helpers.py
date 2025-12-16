@@ -360,10 +360,10 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
     monthly_household_contribution = _to_float(data.get("monthly_household_contribution", 0))
     local_rent = _to_float(data.get("local_rent", 0))
     commission_rate = _to_float(data.get("commission_rate", 6.0))  # Default 6%
+    reverse_mortgage_monthly_draw = _to_float(data.get("reverse_mortgage_monthly_draw", 0))
     care_cost = _to_float(data.get("care_cost", 0))
     care_duration = int(_to_float(data.get("care_duration", 0)))
     return_home = data.get("return_home", "unsure")
-    strategy_selection = data.get("strategy_selection", [])
     home_plan = data.get("home_plan", "not_sure")
     rental_plan = data.get("rental_plan", "not_sure")
 
@@ -436,13 +436,27 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
                 strategy_outputs["months_funded"] = calculate_months_funded(total_rental, care_cost)
             
         elif home_plan == "reverse_mortgage":
-            # Reverse mortgage: calculate draw
+            # Reverse mortgage: calculate draw and monthly impact
             reverse_draw = calculate_reverse_mortgage_draw(home_value, mortgage_balance)
             strategy_outputs["reverse_mortgage_draw"] = reverse_draw
+            strategy_outputs["monthly_draw"] = reverse_mortgage_monthly_draw
             strategy_outputs["monthly_cost"] = monthly_carry
             strategy_outputs["equity_used"] = reverse_draw
+            
+            # Calculate impact on affordability
+            if reverse_mortgage_monthly_draw > 0:
+                # Monthly draw adds to available income
+                strategy_outputs["monthly_income_increase"] = reverse_mortgage_monthly_draw
+                # Calculate how long the lump sum lasts at this draw rate
+                if reverse_draw > 0:
+                    strategy_outputs["draw_duration_months"] = reverse_draw / reverse_mortgage_monthly_draw
+            
             if care_cost > 0:
+                # Show total months funded by lump sum
                 strategy_outputs["months_funded"] = calculate_months_funded(reverse_draw, care_cost)
+                # If monthly draw specified, show net impact on affordability
+                if reverse_mortgage_monthly_draw > 0 and care_cost > reverse_mortgage_monthly_draw:
+                    strategy_outputs["monthly_gap_after_draw"] = care_cost - reverse_mortgage_monthly_draw
             
         elif home_plan == "not_sure":
             # Not sure: show all options
@@ -451,22 +465,6 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
             if local_rent > 0:
                 strategy_outputs["potential_net_rent"] = calculate_net_rental_income(local_rent, monthly_carry)
             strategy_outputs["monthly_cost"] = monthly_carry
-
-    # Analyze strategies if user selected multiple to compare
-    strategies = {}
-    if owns_home == "own" and strategy_selection and home_plan in ["sell", "rent_out", "reverse_mortgage", "not_sure"]:
-        strategies = analyze_home_equity_strategies(
-            owns_home=owns_home,
-            home_value=home_value,
-            mortgage_balance=mortgage_balance,
-            monthly_carry=monthly_carry,
-            local_rent=local_rent,
-            care_cost=care_cost,
-            care_duration=care_duration,
-            return_home=return_home,
-            strategy_selection=strategy_selection,
-            commission_rate=commission_rate,
-        )
 
     return {
         # Raw inputs
@@ -479,10 +477,10 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
         "monthly_household_contribution": monthly_household_contribution,
         "local_rent": local_rent,
         "commission_rate": commission_rate,
+        "reverse_mortgage_monthly_draw": reverse_mortgage_monthly_draw,
         "care_cost": care_cost,
         "care_duration": care_duration,
         "return_home": return_home,
-        "strategy_selection": strategy_selection,
         "home_plan": home_plan,
         "rental_plan": rental_plan,
         # Computed values
@@ -491,8 +489,6 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
         "equity_available": equity_available,
         "sale_proceeds": sale_proceeds,
         "strategy_outputs": strategy_outputs,
-        "strategies": strategies,
-        "has_strategies": len(strategies) > 0,
     }
 
 

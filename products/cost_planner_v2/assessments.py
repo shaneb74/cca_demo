@@ -873,7 +873,7 @@ def _render_single_page_sections(
 
 
 def _render_home_equity_results(state: dict[str, Any]) -> None:
-    """Render comparison table for home equity strategies."""
+    """Render home equity financial analysis based on selected plan."""
     
     # Only render if user owns a home and has actionable plan
     owns_home = state.get("owns_home")
@@ -883,134 +883,144 @@ def _render_home_equity_results(state: dict[str, Any]) -> None:
     if owns_home != "own" or home_plan not in ["sell", "rent_out", "reverse_mortgage", "not_sure"]:
         return
     
-    # Get strategies from augmented state
-    strategies = state.get("strategies", {})
+    # Get strategy outputs from augmented state
+    strategy_outputs = state.get("strategy_outputs", {})
     
-    if not strategies:
+    if not strategy_outputs:
         return
+    
+    # Determine strategy title based on home_plan
+    plan_titles = {
+        "sell": "Selling Your Home",
+        "rent_out": "Renting Out Your Home", 
+        "reverse_mortgage": "Reverse Mortgage",
+        "not_sure": "Your Options"
+    }
+    
+    title = plan_titles.get(home_plan, "Home Equity Analysis")
     
     # Render results header
     st.markdown(
-        """
+        f"""
         <div style='margin: 40px 0 24px 0; padding-top: 24px; border-top: 2px solid #e5e7eb;'>
             <h2 style='font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 8px 0;'>
-                Strategy Comparison
+                {title}
             </h2>
             <p style='font-size: 14px; color: #64748b; margin: 0 0 24px 0;'>
-                Here's how each selected strategy compares for funding care
+                Financial impact of your housing strategy
             </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
     
-    # Render each strategy as a card
-    for strategy_key, result in strategies.items():
-        strategy_name = result.get("strategy", strategy_key.title())
-        net_proceeds = result.get("net_proceeds", 0)
-        monthly_cash_flow = result.get("monthly_cash_flow", 0)
-        months_funded = result.get("months_of_care_funded", 0)
-        considerations = result.get("considerations", [])
-        
-        # Determine card color based on strategy
-        if strategy_key == "keep":
-            accent_color = "#6b7280"  # Gray
-        elif strategy_key == "rent":
-            accent_color = "#2563eb"  # Blue
-        elif strategy_key == "sell":
-            accent_color = "#10b981"  # Green
-        elif strategy_key == "reverse_mortgage":
-            accent_color = "#8b5cf6"  # Purple
-        else:
-            accent_color = "#64748b"  # Default gray
-        
-        # Build metrics row
-        metrics_html = []
-        
-        if net_proceeds > 0:
-            metrics_html.append(
-                f"""
-                <div style='flex: 1; min-width: 150px;'>
-                    <div style='font-size: 12px; font-weight: 500; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;'>
-                        NET PROCEEDS
-                    </div>
-                    <div style='font-size: 24px; font-weight: 700; color: #111827;'>
-                        ${net_proceeds:,.0f}
-                    </div>
+    # Build metrics based on strategy_outputs
+    metrics_html = []
+    
+    # Build metrics based on outputs
+    if "sale_proceeds" in strategy_outputs and strategy_outputs["sale_proceeds"] > 0:
+        metrics_html.append(
+            f"""<div style='margin-bottom: 16px;'>
+                <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                    NET SALE PROCEEDS
                 </div>
-                """
-            )
-        
-        if monthly_cash_flow != 0:
-            flow_label = "MONTHLY CASH FLOW" if monthly_cash_flow > 0 else "MONTHLY COST"
-            flow_value = abs(monthly_cash_flow)
-            metrics_html.append(
-                f"""
-                <div style='flex: 1; min-width: 150px;'>
-                    <div style='font-size: 12px; font-weight: 500; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;'>
-                        {flow_label}
-                    </div>
-                    <div style='font-size: 24px; font-weight: 700; color: #111827;'>
-                        ${flow_value:,.0f}
-                    </div>
+                <div style='font-size: 28px; font-weight: 700; color: #111827;'>
+                    ${strategy_outputs["sale_proceeds"]:,.0f}
                 </div>
-                """
-            )
-        
-        if months_funded > 0:
-            years = months_funded / 12
-            time_label = f"{months_funded:.0f} months" if months_funded < 24 else f"{years:.1f} years"
-            metrics_html.append(
-                f"""
-                <div style='flex: 1; min-width: 150px;'>
-                    <div style='font-size: 12px; font-weight: 500; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;'>
-                        CARE FUNDED
-                    </div>
-                    <div style='font-size: 24px; font-weight: 700; color: #111827;'>
-                        {time_label}
-                    </div>
+            </div>"""
+        )
+    
+    if "reverse_mortgage_draw" in strategy_outputs and strategy_outputs["reverse_mortgage_draw"] > 0:
+        metrics_html.append(
+            f"""<div style='margin-bottom: 16px;'>
+                <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                    AVAILABLE FROM REVERSE MORTGAGE
                 </div>
-                """
-            )
-        
-        metrics_row = "".join(metrics_html) if metrics_html else "<div style='font-size: 14px; color: #64748b;'>No funding generated</div>"
-        
-        # Build considerations list
-        considerations_html = "".join(
-            [f"<li style='margin-bottom: 8px;'>{item}</li>" for item in considerations]
+                <div style='font-size: 28px; font-weight: 700; color: #111827;'>
+                    ${strategy_outputs["reverse_mortgage_draw"]:,.0f}
+                </div>
+            </div>"""
         )
         
-        # Render strategy card
-        st.markdown(
-            f"""
-            <div style='
-                margin-bottom: 24px;
-                padding: 24px;
-                background: white;
-                border: 1px solid #e5e7eb;
-                border-left: 4px solid {accent_color};
-                border-radius: 8px;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            '>
-                <h3 style='font-size: 20px; font-weight: 600; color: #111827; margin: 0 0 16px 0;'>
-                    {strategy_name}
-                </h3>
-                
-                <div style='display: flex; flex-wrap: wrap; gap: 32px; margin-bottom: 24px;'>
-                    {metrics_row}
-                </div>
-                
-                <div style='padding-top: 16px; border-top: 1px solid #e5e7eb;'>
-                    <div style='font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;'>
-                        Key Considerations
+        if "monthly_draw" in strategy_outputs and strategy_outputs["monthly_draw"] > 0:
+            metrics_html.append(
+                f"""<div style='margin-bottom: 16px;'>
+                    <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                        MONTHLY DRAW
                     </div>
-                    <ul style='margin: 0; padding-left: 20px; font-size: 14px; color: #374151; line-height: 1.6;'>
-                        {considerations_html}
-                    </ul>
+                    <div style='font-size: 28px; font-weight: 700; color: #2563eb;'>
+                        ${strategy_outputs["monthly_draw"]:,.0f}/mo
+                    </div>
+                </div>"""
+            )
+            
+            if "draw_duration_months" in strategy_outputs:
+                duration = strategy_outputs["draw_duration_months"]
+                years = duration / 12
+                time_str = f"{years:.1f} years" if duration >= 24 else f"{duration:.0f} months"
+                metrics_html.append(
+                    f"""<div style='margin-bottom: 16px;'>
+                        <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                            LUMP SUM LASTS
+                        </div>
+                        <div style='font-size: 28px; font-weight: 700; color: #111827;'>
+                            {time_str}
+                        </div>
+                    </div>"""
+                )
+            
+            if "monthly_gap_after_draw" in strategy_outputs:
+                gap = strategy_outputs["monthly_gap_after_draw"]
+                metrics_html.append(
+                    f"""<div style='margin-bottom: 16px;'>
+                        <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                            REMAINING MONTHLY GAP
+                        </div>
+                        <div style='font-size: 28px; font-weight: 700; color: #dc2626;'>
+                            ${gap:,.0f}/mo
+                        </div>
+                        <div style='font-size: 13px; color: #64748b; margin-top: 4px;'>
+                            Additional funding needed per month
+                        </div>
+                    </div>"""
+                )
+    
+    if "net_monthly_income" in strategy_outputs:
+        income = strategy_outputs["net_monthly_income"]
+        color = "#10b981" if income > 0 else "#dc2626"
+        sign = "+" if income > 0 else "-"
+        metrics_html.append(
+            f"""<div style='margin-bottom: 16px;'>
+                <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                    NET RENTAL INCOME
                 </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+                <div style='font-size: 28px; font-weight: 700; color: {color};'>
+                    {sign}${abs(income):,.0f}/mo
+                </div>
+            </div>"""
+        )
+    
+    if "months_funded" in strategy_outputs and strategy_outputs["months_funded"] > 0:
+        months = strategy_outputs["months_funded"]
+        years = months / 12
+        time_str = f"{years:.1f} years" if months >= 24 else f"{months:.0f} months"
+        metrics_html.append(
+            f"""<div style='margin-bottom: 16px;'>
+                <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                    CAN FUND CARE FOR
+                </div>
+                <div style='font-size: 28px; font-weight: 700; color: #111827;'>
+                    {time_str}
+                </div>
+            </div>"""
+        )
+    
+    if metrics_html:
+        st.markdown(
+            f"""<div style='display: flex; flex-wrap: wrap; gap: 32px; margin-bottom: 24px;'>
+                {"".join(metrics_html)}
+            </div>""",
+            unsafe_allow_html=True
         )
 
 

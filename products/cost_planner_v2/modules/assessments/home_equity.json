@@ -252,35 +252,6 @@
       "layout": "single_column",
       "fields": [
         {
-          "key": "strategy_selection",
-          "label": "Which options should we compare for funding care?",
-          "type": "checkbox",
-          "required": false,
-          "options": [
-            {
-              "value": "keep",
-              "label": "Keep the home (baseline - no equity used)"
-            },
-            {
-              "value": "rent",
-              "label": "Rent out the home (generate income)"
-            },
-            {
-              "value": "sell",
-              "label": "Sell the home (liquidate equity)"
-            },
-            {
-              "value": "reverse_mortgage",
-              "label": "Reverse mortgage (access equity without selling)"
-            }
-          ],
-          "help": "We'll calculate realistic proceeds: sale after commission, reverse mortgage at ~50% of home value minus fees (~4%), net rental income after all costs.",
-          "visible_if": {
-            "field": "home_plan",
-            "in": ["sell", "rent_out", "reverse_mortgage", "not_sure"]
-          }
-        },
-        {
           "key": "care_cost",
           "label": "Estimated monthly cost of care",
           "type": "currency",
@@ -308,6 +279,21 @@
           "visible_if": {
             "field": "home_plan",
             "in": ["sell", "rent_out", "reverse_mortgage", "not_sure"]
+          }
+        },
+        {
+          "key": "reverse_mortgage_monthly_draw",
+          "label": "How much would you draw monthly from reverse mortgage?",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 20000,
+          "step": 100,
+          "default": 0,
+          "help": "Monthly amount you'd use from the reverse mortgage to supplement income. We'll show how this impacts your care affordability.",
+          "visible_if": {
+            "field": "home_plan",
+            "equals": "reverse_mortgage"
           }
         },
         {
