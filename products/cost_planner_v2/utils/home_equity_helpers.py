@@ -349,26 +349,31 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
     care_cost = _to_float(data.get("care_cost", 0))
     care_duration = int(_to_float(data.get("care_duration", 0)))
     return_home = data.get("return_home", "unsure")
-    analyze_strategies = data.get("analyze_strategies", "no")
     strategy_selection = data.get("strategy_selection", [])
-    home_plan = data.get("home_plan", "uncertain")
-    rental_plan = data.get("rental_plan", "uncertain")
+    home_plan = data.get("home_plan", "not_sure")
+    rental_plan = data.get("rental_plan", "not_sure")
 
-    # Calculate monthly housing cost based on housing type
+    # Calculate monthly housing cost based on housing type and plan
     monthly_housing_cost = 0.0
     
     if owns_home == "own":
-        monthly_housing_cost = monthly_carry
+        # Homeowners: use carrying costs unless selling
+        if home_plan == "sell":
+            # If selling, no ongoing housing costs (will get new housing later)
+            monthly_housing_cost = 0.0
+        else:
+            # Keep, rent out, reverse mortgage, or unsure - keep carrying costs
+            monthly_housing_cost = monthly_carry
     elif owns_home == "rent":
-        # Include rent based on rental plan
-        if rental_plan in ("continue", "uncertain"):
+        # Renters: include rent based on rental plan
+        if rental_plan in ("continue", "not_sure"):
             # Conservative: include rent if continuing or unsure
             monthly_housing_cost = monthly_rent
         else:
             # end_lease: exclude rent
             monthly_housing_cost = 0.0
     elif owns_home == "other":
-        # Include household contribution if any
+        # Other: include household contribution if any
         if household_contribution_type != "no":
             monthly_housing_cost = monthly_household_contribution
         else:
@@ -377,13 +382,62 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
     # Compute home equity (only for homeowners)
     home_equity = 0.0
     equity_available = 0.0
+    sale_proceeds = 0.0
+    
     if owns_home == "own" and home_value > 0:
         home_equity = home_value - mortgage_balance
-        equity_available = max(0.0, home_equity)  # Can't have negative equity available
+        equity_available = max(0.0, home_equity)
+        # Calculate potential sale proceeds
+        sale_proceeds = calculate_net_sale_proceeds(home_value, mortgage_balance)
 
-    # Only analyze strategies if user opted in and owns home
+    # Calculate strategy-specific values based on home_plan
+    strategy_outputs = {}
+    
+    if owns_home == "own" and home_value > 0:
+        if home_plan == "keep":
+            # Keep: show potential proceeds but don't use them
+            strategy_outputs["potential_sale_proceeds"] = sale_proceeds
+            strategy_outputs["monthly_cost"] = monthly_carry
+            strategy_outputs["equity_used"] = 0.0
+            
+        elif home_plan == "sell":
+            # Sell: calculate proceeds
+            strategy_outputs["sale_proceeds"] = sale_proceeds
+            strategy_outputs["monthly_cost"] = 0.0
+            strategy_outputs["equity_used"] = sale_proceeds
+            if care_cost > 0:
+                strategy_outputs["months_funded"] = calculate_months_funded(sale_proceeds, care_cost)
+            
+        elif home_plan == "rent_out":
+            # Rent out: calculate net rental income
+            net_rent = calculate_net_rental_income(local_rent, monthly_carry)
+            strategy_outputs["net_monthly_income"] = net_rent
+            strategy_outputs["monthly_cost"] = monthly_carry
+            strategy_outputs["equity_used"] = 0.0
+            if care_cost > 0 and care_duration > 0:
+                total_rental = net_rent * care_duration
+                strategy_outputs["months_funded"] = calculate_months_funded(total_rental, care_cost)
+            
+        elif home_plan == "reverse_mortgage":
+            # Reverse mortgage: calculate draw
+            reverse_draw = calculate_reverse_mortgage_draw(home_value, mortgage_balance)
+            strategy_outputs["reverse_mortgage_draw"] = reverse_draw
+            strategy_outputs["monthly_cost"] = monthly_carry
+            strategy_outputs["equity_used"] = reverse_draw
+            if care_cost > 0:
+                strategy_outputs["months_funded"] = calculate_months_funded(reverse_draw, care_cost)
+            
+        elif home_plan == "not_sure":
+            # Not sure: show all options
+            strategy_outputs["potential_sale_proceeds"] = sale_proceeds
+            strategy_outputs["potential_reverse_draw"] = calculate_reverse_mortgage_draw(home_value, mortgage_balance)
+            if local_rent > 0:
+                strategy_outputs["potential_net_rent"] = calculate_net_rental_income(local_rent, monthly_carry)
+            strategy_outputs["monthly_cost"] = monthly_carry
+
+    # Analyze strategies if user selected multiple to compare
     strategies = {}
-    if owns_home == "own" and analyze_strategies == "yes" and strategy_selection:
+    if owns_home == "own" and strategy_selection and home_plan in ["sell", "rent_out", "reverse_mortgage", "not_sure"]:
         strategies = analyze_home_equity_strategies(
             owns_home=owns_home,
             home_value=home_value,
@@ -409,7 +463,6 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
         "care_cost": care_cost,
         "care_duration": care_duration,
         "return_home": return_home,
-        "analyze_strategies": analyze_strategies,
         "strategy_selection": strategy_selection,
         "home_plan": home_plan,
         "rental_plan": rental_plan,
@@ -417,6 +470,8 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
         "monthly_housing_cost": monthly_housing_cost,
         "home_equity": home_equity,
         "equity_available": equity_available,
+        "sale_proceeds": sale_proceeds,
+        "strategy_outputs": strategy_outputs,
         "strategies": strategies,
         "has_strategies": len(strategies) > 0,
     }

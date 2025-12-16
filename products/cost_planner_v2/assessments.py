@@ -875,11 +875,12 @@ def _render_single_page_sections(
 def _render_home_equity_results(state: dict[str, Any]) -> None:
     """Render comparison table for home equity strategies."""
     
-    # Only render if user owns a home and opted into analysis
+    # Only render if user owns a home and has actionable plan
     owns_home = state.get("owns_home")
-    analyze_strategies = state.get("analyze_strategies")
+    home_plan = state.get("home_plan", "not_sure")
     
-    if owns_home != "own" or analyze_strategies != "yes":
+    # Only show for homeowners with actionable plans (not just "keep")
+    if owns_home != "own" or home_plan not in ["sell", "rent_out", "reverse_mortgage", "not_sure"]:
         return
     
     # Get strategies from augmented state

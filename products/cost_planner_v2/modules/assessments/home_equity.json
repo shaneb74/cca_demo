@@ -12,42 +12,24 @@
       "type": "intro",
       "title": "Home & Housing Analysis",
       "icon": "🏠",
-      "help_text": "Let's understand {NAME_POS} housing situation. If you own a home, we can also help you evaluate strategies to use home equity for care funding.",
+      "help_text": "Let's understand {NAME_POS} housing situation and explore how housing costs or home equity might be used to support care.",
       "fields": [],
       "info_boxes": [
         {
           "type": "info",
-          "content": "Start with basic housing information. If you own a home and want to explore funding options, you can optionally evaluate strategies like selling, renting, or reverse mortgage."
+          "content": "We'll ask about current housing, monthly costs, and if applicable, options for using home equity to fund care."
         }
       ]
     },
     {
       "id": "housing_facts",
-      "title": "Housing Profile",
+      "title": "Housing Situation",
       "icon": "🏠",
       "layout": "single_column",
       "fields": [
         {
-          "key": "analyze_strategies",
-          "label": "Would you like to evaluate specific home equity strategies?",
-          "type": "radio",
-          "required": false,
-          "options": [
-            {
-              "value": "yes",
-              "label": "Yes - compare strategies to fund care"
-            },
-            {
-              "value": "no",
-              "label": "No - just record basic housing info for now"
-            }
-          ],
-          "default": "no",
-          "help": "This optional analysis helps compare options like selling, renting, or reverse mortgage. You can answer basic housing questions first and decide later."
-        },
-        {
           "key": "owns_home",
-          "label": "Does {NAME} currently own or rent their home?",
+          "label": "Does {NAME} currently own, rent, or have another housing arrangement?",
           "type": "radio",
           "required": false,
           "options": [
@@ -90,7 +72,7 @@
           "max": 10000000,
           "step": 5000,
           "default": 0,
-          "help": "Total amount left on the mortgage (0 if paid off)",
+          "help": "Total amount left on the mortgage (enter 0 if paid off)",
           "visible_if": {
             "field": "owns_home",
             "equals": "own"
@@ -118,7 +100,7 @@
           "required": false,
           "options": [
             {
-              "value": "stay",
+              "value": "keep",
               "label": "Keep for living there / returning later"
             },
             {
@@ -134,15 +116,30 @@
               "label": "Reverse mortgage"
             },
             {
-              "value": "uncertain",
+              "value": "not_sure",
               "label": "Not sure yet"
             }
           ],
-          "default": "uncertain",
-          "help": "This is just initial thinking - you can explore options below",
+          "default": "not_sure",
+          "help": "Select the option you're leaning toward - we'll show you what each means financially",
           "visible_if": {
             "field": "owns_home",
             "equals": "own"
+          }
+        },
+        {
+          "key": "local_rent",
+          "label": "Potential monthly rental income",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 50000,
+          "step": 100,
+          "default": 0,
+          "help": "Approximate monthly rent the home could generate if rented out",
+          "visible_if": {
+            "field": "home_plan",
+            "equals": "rent_out"
           }
         },
         {
@@ -177,12 +174,12 @@
               "help": "Rent will no longer be included once care begins"
             },
             {
-              "value": "uncertain",
+              "value": "not_sure",
               "label": "Not sure yet",
               "help": "We'll keep rent included for now (conservative approach)"
             }
           ],
-          "default": "uncertain",
+          "default": "not_sure",
           "help": "This determines whether rent is included in ongoing monthly care costs",
           "visible_if": {
             "field": "owns_home",
@@ -234,7 +231,7 @@
       "info_boxes": []
     },
     {
-      "id": "equity_analysis",
+      "id": "strategy_comparison",
       "title": "Strategy Comparison",
       "icon": "📊",
       "layout": "single_column",
@@ -247,7 +244,7 @@
           "options": [
             {
               "value": "keep",
-              "label": "Keep the home (maintain ownership)"
+              "label": "Keep the home (baseline - no equity used)"
             },
             {
               "value": "rent",
@@ -262,25 +259,10 @@
               "label": "Reverse mortgage (access equity without selling)"
             }
           ],
-          "help": "Select all strategies you want to compare (homeowners only)",
+          "help": "Select all strategies you want to compare",
           "visible_if": {
-            "field": "analyze_strategies",
-            "equals": "yes"
-          }
-        },
-        {
-          "key": "local_rent",
-          "label": "Potential monthly rental income",
-          "type": "currency",
-          "required": false,
-          "min": 0,
-          "max": 50000,
-          "step": 100,
-          "default": 0,
-          "help": "Approximate monthly rent the home could generate",
-          "visible_if": {
-            "field": "analyze_strategies",
-            "equals": "yes"
+            "field": "home_plan",
+            "in": ["sell", "rent_out", "reverse_mortgage", "not_sure"]
           }
         },
         {
@@ -294,8 +276,8 @@
           "default": 0,
           "help": "Monthly care cost from your plan (optional - used to calculate months funded)",
           "visible_if": {
-            "field": "analyze_strategies",
-            "equals": "yes"
+            "field": "home_plan",
+            "in": ["sell", "rent_out", "reverse_mortgage", "not_sure"]
           }
         },
         {
@@ -309,8 +291,8 @@
           "default": 0,
           "help": "Approximate months care will be needed (e.g., 24 for 2 years)",
           "visible_if": {
-            "field": "analyze_strategies",
-            "equals": "yes"
+            "field": "home_plan",
+            "in": ["sell", "rent_out", "reverse_mortgage", "not_sure"]
           }
         },
         {
@@ -334,8 +316,8 @@
           ],
           "help": "Whether maintaining ownership is important for future return",
           "visible_if": {
-            "field": "analyze_strategies",
-            "equals": "yes"
+            "field": "home_plan",
+            "in": ["sell", "reverse_mortgage"]
           }
         }
       ],
