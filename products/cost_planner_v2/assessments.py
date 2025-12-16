@@ -26,6 +26,7 @@ from products.cost_planner_v2.utils.financial_helpers import (
     normalize_asset_data,
     normalize_income_data,
 )
+from products.cost_planner_v2.utils.home_equity_helpers import normalize_home_equity_data
 from products.cost_planner_v2.utils.va_rates import get_monthly_va_disability
 
 # Assessments that use the single-page progressive disclosure layout
@@ -35,6 +36,7 @@ _SINGLE_PAGE_ASSESSMENTS: set[str] = {
     "va_benefits",
     "health_insurance",
     "life_insurance",
+    "home_equity_analysis",
 }
 
 
@@ -291,6 +293,14 @@ def _render_assessment_card(assessment: dict[str, Any], product_key: str) -> Non
                 coverage_type = data.get("health_coverage_type", "")
                 if coverage_type:
                     summary_text = coverage_type.replace("_", " ").title()
+            elif key == "home_equity_analysis":
+                home_equity = data.get("home_equity", 0)
+                strategies = data.get("strategies", {})
+                num_strategies = len(strategies)
+                if home_equity > 0:
+                    summary_text = f"${home_equity:,.0f} equity"
+                    if num_strategies > 0:
+                        summary_text += f" • {num_strategies} strategies"
 
     # Status text and button label
     if is_complete:
@@ -851,6 +861,145 @@ def _render_single_page_sections(
         st.markdown("</div>", unsafe_allow_html=True)
 
 
+def _render_home_equity_results(state: dict[str, Any]) -> None:
+    """Render comparison table for home equity strategies."""
+    
+    # Only render if user owns a home
+    owns_home = state.get("owns_home")
+    if owns_home != "yes":
+        return
+    
+    # Get strategies from augmented state
+    strategies = state.get("strategies", {})
+    
+    if not strategies:
+        return
+    
+    # Render results header
+    st.markdown(
+        """
+        <div style='margin: 40px 0 24px 0; padding-top: 24px; border-top: 2px solid #e5e7eb;'>
+            <h2 style='font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 8px 0;'>
+                Strategy Comparison
+            </h2>
+            <p style='font-size: 14px; color: #64748b; margin: 0 0 24px 0;'>
+                Here's how each selected strategy compares for funding care
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    
+    # Render each strategy as a card
+    for strategy_key, result in strategies.items():
+        strategy_name = result.get("strategy", strategy_key.title())
+        net_proceeds = result.get("net_proceeds", 0)
+        monthly_cash_flow = result.get("monthly_cash_flow", 0)
+        months_funded = result.get("months_of_care_funded", 0)
+        considerations = result.get("considerations", [])
+        
+        # Determine card color based on strategy
+        if strategy_key == "keep":
+            accent_color = "#6b7280"  # Gray
+        elif strategy_key == "rent":
+            accent_color = "#2563eb"  # Blue
+        elif strategy_key == "sell":
+            accent_color = "#10b981"  # Green
+        elif strategy_key == "reverse_mortgage":
+            accent_color = "#8b5cf6"  # Purple
+        else:
+            accent_color = "#64748b"  # Default gray
+        
+        # Build metrics row
+        metrics_html = []
+        
+        if net_proceeds > 0:
+            metrics_html.append(
+                f"""
+                <div style='flex: 1; min-width: 150px;'>
+                    <div style='font-size: 12px; font-weight: 500; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;'>
+                        NET PROCEEDS
+                    </div>
+                    <div style='font-size: 24px; font-weight: 700; color: #111827;'>
+                        ${net_proceeds:,.0f}
+                    </div>
+                </div>
+                """
+            )
+        
+        if monthly_cash_flow != 0:
+            flow_label = "MONTHLY CASH FLOW" if monthly_cash_flow > 0 else "MONTHLY COST"
+            flow_value = abs(monthly_cash_flow)
+            metrics_html.append(
+                f"""
+                <div style='flex: 1; min-width: 150px;'>
+                    <div style='font-size: 12px; font-weight: 500; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;'>
+                        {flow_label}
+                    </div>
+                    <div style='font-size: 24px; font-weight: 700; color: #111827;'>
+                        ${flow_value:,.0f}
+                    </div>
+                </div>
+                """
+            )
+        
+        if months_funded > 0:
+            years = months_funded / 12
+            time_label = f"{months_funded:.0f} months" if months_funded < 24 else f"{years:.1f} years"
+            metrics_html.append(
+                f"""
+                <div style='flex: 1; min-width: 150px;'>
+                    <div style='font-size: 12px; font-weight: 500; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;'>
+                        CARE FUNDED
+                    </div>
+                    <div style='font-size: 24px; font-weight: 700; color: #111827;'>
+                        {time_label}
+                    </div>
+                </div>
+                """
+            )
+        
+        metrics_row = "".join(metrics_html) if metrics_html else "<div style='font-size: 14px; color: #64748b;'>No funding generated</div>"
+        
+        # Build considerations list
+        considerations_html = "".join(
+            [f"<li style='margin-bottom: 8px;'>{item}</li>" for item in considerations]
+        )
+        
+        # Render strategy card
+        st.markdown(
+            f"""
+            <div style='
+                margin-bottom: 24px;
+                padding: 24px;
+                background: white;
+                border: 1px solid #e5e7eb;
+                border-left: 4px solid {accent_color};
+                border-radius: 8px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            '>
+                <h3 style='font-size: 20px; font-weight: 600; color: #111827; margin: 0 0 16px 0;'>
+                    {strategy_name}
+                </h3>
+                
+                <div style='display: flex; flex-wrap: wrap; gap: 32px; margin-bottom: 24px;'>
+                    {metrics_row}
+                </div>
+                
+                <div style='padding-top: 16px; border-top: 1px solid #e5e7eb;'>
+                    <div style='font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;'>
+                        Key Considerations
+                    </div>
+                    <ul style='margin: 0; padding-left: 20px; font-size: 14px; color: #374151; line-height: 1.6;'>
+                        {considerations_html}
+                    </ul>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
 def render_assessment_page(assessment_key: str, product_key: str = "cost_planner_v2") -> None:
     """
     Render a full assessment page with all sections visible at once.
@@ -921,6 +1070,10 @@ def render_assessment_page(assessment_key: str, product_key: str = "cost_planner
 
     # Progressive disclosure: render sections one at a time based on completion
     _render_progressive_sections(field_sections, state, assessment_key, product_key)
+
+    # Special rendering for home equity analysis results
+    if assessment_key == "home_equity_analysis":
+        _render_home_equity_results(state)
 
     # Calculate and show total at bottom using summary config from assessment
     summary_config = assessment_config.get("summary", {})
@@ -1330,6 +1483,10 @@ def _augment_assessment_state(assessment_key: str, state: dict[str, Any]) -> dic
         normalized["net_asset_value"] = max(
             normalized["total_asset_value"] - normalized["total_asset_debt"], 0.0
         )
+        return normalized
+
+    if assessment_key == "home_equity_analysis":
+        normalized = normalize_home_equity_data(base_state)
         return normalized
 
     return base_state
