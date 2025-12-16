@@ -342,6 +342,9 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
     home_value = _to_float(data.get("home_value", 0))
     mortgage_balance = _to_float(data.get("mortgage_balance", 0))
     monthly_carry = _to_float(data.get("monthly_carry", 0))
+    monthly_rent = _to_float(data.get("monthly_rent", 0))
+    household_contribution_type = data.get("household_contribution_type", "no")
+    monthly_household_contribution = _to_float(data.get("monthly_household_contribution", 0))
     local_rent = _to_float(data.get("local_rent", 0))
     care_cost = _to_float(data.get("care_cost", 0))
     care_duration = int(_to_float(data.get("care_duration", 0)))
@@ -351,12 +354,36 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
     home_plan = data.get("home_plan", "uncertain")
     rental_plan = data.get("rental_plan", "uncertain")
 
-    # Compute home equity
-    home_equity = home_value - mortgage_balance if home_value > 0 else 0.0
+    # Calculate monthly housing cost based on housing type
+    monthly_housing_cost = 0.0
+    
+    if owns_home == "own":
+        monthly_housing_cost = monthly_carry
+    elif owns_home == "rent":
+        # Include rent based on rental plan
+        if rental_plan in ("continue", "uncertain"):
+            # Conservative: include rent if continuing or unsure
+            monthly_housing_cost = monthly_rent
+        else:
+            # end_lease: exclude rent
+            monthly_housing_cost = 0.0
+    elif owns_home == "other":
+        # Include household contribution if any
+        if household_contribution_type != "no":
+            monthly_housing_cost = monthly_household_contribution
+        else:
+            monthly_housing_cost = 0.0
 
-    # Only analyze strategies if user opted in
+    # Compute home equity (only for homeowners)
+    home_equity = 0.0
+    equity_available = 0.0
+    if owns_home == "own" and home_value > 0:
+        home_equity = home_value - mortgage_balance
+        equity_available = max(0.0, home_equity)  # Can't have negative equity available
+
+    # Only analyze strategies if user opted in and owns home
     strategies = {}
-    if analyze_strategies == "yes" and strategy_selection:
+    if owns_home == "own" and analyze_strategies == "yes" and strategy_selection:
         strategies = analyze_home_equity_strategies(
             owns_home=owns_home,
             home_value=home_value,
@@ -375,6 +402,9 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
         "home_value": home_value,
         "mortgage_balance": mortgage_balance,
         "monthly_carry": monthly_carry,
+        "monthly_rent": monthly_rent,
+        "household_contribution_type": household_contribution_type,
+        "monthly_household_contribution": monthly_household_contribution,
         "local_rent": local_rent,
         "care_cost": care_cost,
         "care_duration": care_duration,
@@ -384,7 +414,9 @@ def normalize_home_equity_data(data: dict[str, Any]) -> dict[str, Any]:
         "home_plan": home_plan,
         "rental_plan": rental_plan,
         # Computed values
+        "monthly_housing_cost": monthly_housing_cost,
         "home_equity": home_equity,
+        "equity_available": equity_available,
         "strategies": strategies,
         "has_strategies": len(strategies) > 0,
     }

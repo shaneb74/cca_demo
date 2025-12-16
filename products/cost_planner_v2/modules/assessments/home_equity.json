@@ -28,6 +28,24 @@
       "layout": "single_column",
       "fields": [
         {
+          "key": "analyze_strategies",
+          "label": "Would you like to evaluate specific home equity strategies?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            {
+              "value": "yes",
+              "label": "Yes - compare strategies to fund care"
+            },
+            {
+              "value": "no",
+              "label": "No - just record basic housing info for now"
+            }
+          ],
+          "default": "no",
+          "help": "This optional analysis helps compare options like selling, renting, or reverse mortgage. You can answer basic housing questions first and decide later."
+        },
+        {
           "key": "owns_home",
           "label": "Does {NAME} currently own or rent their home?",
           "type": "radio",
@@ -87,10 +105,10 @@
           "max": 50000,
           "step": 100,
           "default": 0,
-          "help": "Total monthly costs: mortgage/rent, taxes, insurance, HOA, utilities, maintenance",
+          "help": "Total monthly costs: mortgage payment, property taxes, insurance, HOA fees, utilities, maintenance",
           "visible_if": {
             "field": "owns_home",
-            "not_equals": "other"
+            "equals": "own"
           }
         },
         {
@@ -128,28 +146,88 @@
           }
         },
         {
+          "key": "monthly_rent",
+          "label": "Monthly rent amount",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 50000,
+          "step": 100,
+          "default": 0,
+          "help": "Current monthly rent payment",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "rent"
+          }
+        },
+        {
           "key": "rental_plan",
-          "label": "What are you planning with the rental?",
+          "label": "How should this rent be treated once care begins?",
           "type": "radio",
           "required": false,
           "options": [
             {
-              "value": "keep",
-              "label": "Keep the lease / stay"
+              "value": "continue",
+              "label": "Continue lease during care",
+              "help": "Monthly rent will continue to be included in costs"
             },
             {
               "value": "end_lease",
-              "label": "End lease when care starts"
+              "label": "End lease when care starts",
+              "help": "Rent will no longer be included once care begins"
             },
             {
               "value": "uncertain",
-              "label": "Not sure yet"
+              "label": "Not sure yet",
+              "help": "We'll keep rent included for now (conservative approach)"
             }
           ],
           "default": "uncertain",
+          "help": "This determines whether rent is included in ongoing monthly care costs",
           "visible_if": {
             "field": "owns_home",
             "equals": "rent"
+          }
+        },
+        {
+          "key": "household_contribution_type",
+          "label": "Do they contribute to household housing expenses?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            {
+              "value": "no",
+              "label": "No - no regular housing costs"
+            },
+            {
+              "value": "fixed",
+              "label": "Yes - fixed monthly contribution"
+            },
+            {
+              "value": "variable",
+              "label": "Yes - variable or uncertain"
+            }
+          ],
+          "default": "no",
+          "help": "Whether {NAME} pays any amount toward housing",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "other"
+          }
+        },
+        {
+          "key": "monthly_household_contribution",
+          "label": "Monthly household contribution",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 50000,
+          "step": 50,
+          "default": 0,
+          "help": "Fixed monthly amount contributed toward housing (leave 0 if variable/uncertain)",
+          "visible_if": {
+            "field": "household_contribution_type",
+            "not_equals": "no"
           }
         }
       ],
@@ -157,35 +235,13 @@
     },
     {
       "id": "equity_analysis",
-      "title": "Home Equity Strategy Analysis",
+      "title": "Strategy Comparison",
       "icon": "📊",
       "layout": "single_column",
       "fields": [
         {
-          "key": "analyze_strategies",
-          "label": "Would you like to evaluate specific home equity strategies?",
-          "type": "radio",
-          "required": false,
-          "options": [
-            {
-              "value": "yes",
-              "label": "Yes - compare strategies to fund care"
-            },
-            {
-              "value": "no",
-              "label": "No - just record basic housing info for now"
-            }
-          ],
-          "default": "no",
-          "help": "This optional analysis helps compare options like selling, renting, or reverse mortgage",
-          "visible_if": {
-            "field": "owns_home",
-            "equals": "own"
-          }
-        },
-        {
           "key": "strategy_selection",
-          "label": "Which strategies would you like to compare?",
+          "label": "Which options should we compare for funding care?",
           "type": "checkbox",
           "required": false,
           "options": [
@@ -206,7 +262,7 @@
               "label": "Reverse mortgage (access equity without selling)"
             }
           ],
-          "help": "Select all strategies you want to compare",
+          "help": "Select all strategies you want to compare (homeowners only)",
           "visible_if": {
             "field": "analyze_strategies",
             "equals": "yes"
@@ -221,7 +277,7 @@
           "max": 50000,
           "step": 100,
           "default": 0,
-          "help": "Approximate monthly rent the home could generate (skip if unsure)",
+          "help": "Approximate monthly rent the home could generate",
           "visible_if": {
             "field": "analyze_strategies",
             "equals": "yes"
@@ -236,7 +292,7 @@
           "max": 50000,
           "step": 100,
           "default": 0,
-          "help": "Monthly care cost from your plan (if known - optional)",
+          "help": "Monthly care cost from your plan (optional - used to calculate months funded)",
           "visible_if": {
             "field": "analyze_strategies",
             "equals": "yes"
