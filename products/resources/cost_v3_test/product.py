@@ -316,7 +316,9 @@ def _display_tier_assignment(v3_result: Dict[str, Any], gcp_outcome: Dict[str, A
     
     st.markdown("### 🎯 Tier Assignment")
     
-    gcp_flags, gcp_answers = prepare_gcp_context(gcp_outcome)
+    gcp_context = prepare_gcp_context(gcp_outcome)
+    gcp_flags = gcp_context["flags"]
+    gcp_answers = gcp_context["answers"]
     
     col1, col2 = st.columns([2, 1])
     

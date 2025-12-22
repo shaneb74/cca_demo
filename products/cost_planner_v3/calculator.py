@@ -46,7 +46,9 @@ def calculate_care_costs(
     """
     
     # Prepare normalized GCP context
-    gcp_flags, gcp_answers = prepare_gcp_context(gcp_outcome)
+    gcp_context = prepare_gcp_context(gcp_outcome)
+    gcp_flags = gcp_context["flags"]
+    gcp_answers = gcp_context["answers"]
     
     # Determine care type
     if care_type is None:
