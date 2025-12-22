@@ -261,6 +261,12 @@
           "label": "Care Hours Calculator",
           "module": "products.resources.care_hours_calculator.product:render",
           "hidden": true
+        },
+        {
+          "key": "cost_v3_test",
+          "label": "Cost Planner v3 Test",
+          "module": "products.resources.cost_v3_test.product:render",
+          "hidden": true
         }
       ]
     }
