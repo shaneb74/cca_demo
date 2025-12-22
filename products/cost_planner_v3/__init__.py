@@ -21,5 +21,15 @@ Module Structure:
 __version__ = "3.0.0"
 
 from products.cost_planner_v3.calculator import calculate_care_costs
+from products.cost_planner_v3.explanations import (
+    generate_cost_explanation,
+    generate_comparison_table,
+    generate_quick_summary
+)
 
-__all__ = ["calculate_care_costs"]
+__all__ = [
+    "calculate_care_costs",
+    "generate_cost_explanation",
+    "generate_comparison_table",
+    "generate_quick_summary"
+]
