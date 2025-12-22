@@ -230,6 +230,20 @@ def is_base_cost_derived(care_type: str) -> bool:
     return BASE_COSTS_2024.get(care_type, {}).get("derived", False)
 
 
-def get_base_cost_source(care_type: str) -> str:
-    """Get source citation for base cost."""
-    return BASE_COSTS_2024.get(care_type, {}).get("source", "Unknown")
+def get_base_cost_source(care_type: str) -> dict:
+    """
+    Get source citation for base cost.
+    
+    Returns:
+        {
+            "name": str,
+            "url": str,
+            "notes": str (optional)
+        }
+    """
+    cost_data = BASE_COSTS_2024.get(care_type, {})
+    return {
+        "name": cost_data.get("source", "Unknown"),
+        "url": cost_data.get("source_url", ""),
+        "notes": cost_data.get("notes", "")
+    }
