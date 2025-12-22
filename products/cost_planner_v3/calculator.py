@@ -148,9 +148,9 @@ def calculate_assisted_living(
     tier_increment = get_tier_increment("assisted_living", tier_id, regional_multiplier)
     
     # Calculate add-ons
-    max_addon = min(800, regional_base * 0.15)
-    addons = calculate_add_ons(gcp_flags, gcp_answers, max_addon)
+    addons = calculate_add_ons("assisted_living", gcp_flags, gcp_answers, regional_base)
     addon_total = sum(a["amount"] for a in addons)
+    max_addon = min(800, regional_base * 0.15)
     
     # Total
     total = regional_base + tier_increment + addon_total
@@ -194,9 +194,9 @@ def calculate_memory_care(
     tier_increment = get_tier_increment("memory_care", tier_id, regional_multiplier)
     
     # Calculate add-ons
-    max_addon = min(800, regional_base * 0.15)
-    addons = calculate_add_ons(gcp_flags, gcp_answers, max_addon)
+    addons = calculate_add_ons("memory_care", gcp_flags, gcp_answers, regional_base)
     addon_total = sum(a["amount"] for a in addons)
+    max_addon = min(800, regional_base * 0.15)
     
     # Total
     total = regional_base + tier_increment + addon_total
@@ -235,9 +235,9 @@ def calculate_memory_care_high_acuity(
     # High-acuity has no tiers (already intensive)
     # Only add-ons apply
     
-    max_addon = min(800, regional_base * 0.15)
-    addons = calculate_add_ons(gcp_flags, gcp_answers, max_addon)
+    addons = calculate_add_ons("memory_care_high_acuity", gcp_flags, gcp_answers, regional_base)
     addon_total = sum(a["amount"] for a in addons)
+    max_addon = min(800, regional_base * 0.15)
     
     # Total
     total = regional_base + addon_total
