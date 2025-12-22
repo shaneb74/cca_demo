@@ -26,9 +26,6 @@ from products.cost_planner_v3.explanations import (
     generate_cost_explanation,
     generate_quick_summary
 )
-from products.cost_planner_v2.comparison_calcs import (
-    calculate_facility_cost as calculate_v2_cost
-)
 from ui.header_simple import render_header_simple
 from ui.footer_simple import render_footer_simple
 from core.ui import render_navi_panel_v2
@@ -299,9 +296,10 @@ def _calculate_and_display_results() -> None:
         # Display v3 results
         _display_v3_results(v3_result)
         
-        # Display v2 comparison (if facility care)
+        # Display v2 comparison note
         if st.session_state.cv3_care_type in ["assisted_living", "memory_care", "memory_care_high_acuity"]:
-            _display_v2_comparison(gcp_outcome, v3_result)
+            st.markdown("---")
+            st.info("💡 **v2 Comparison**: Run full GCP assessment to compare v2 vs v3 side-by-side")
         
         # Display full explanation
         with st.expander("📄 Full Cost Explanation", expanded=False):
@@ -435,55 +433,3 @@ def _display_v3_results(v3_result: Dict[str, Any]) -> None:
         for addon in v3_result["addons"]:
             with st.expander(f"{addon['label']} (+${addon['amount']:,.2f})"):
                 st.write(addon["description"])
-
-
-def _display_v2_comparison(gcp_outcome: Dict[str, Any], v3_result: Dict[str, Any]) -> None:
-    """Display v2 vs v3 side-by-side comparison."""
-    
-    st.markdown("---")
-    st.markdown("### 🔄 v2 vs v3 Comparison")
-    
-    try:
-        # Calculate v2 cost
-        v2_cost = calculate_v2_cost(
-            care_type=st.session_state.cv3_care_type,
-            regional_multiplier=st.session_state.cv3_regional_multiplier,
-            gcp_outcome=gcp_outcome
-        )
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric(
-                "v2 Total",
-                f"${v2_cost:,.0f}",
-                help="Cost Planner v2 (percentage-based)"
-            )
-        
-        with col2:
-            st.metric(
-                "v3 Total",
-                f"${v3_result['total_monthly']:,.0f}",
-                help="Cost Planner v3 (tier-based)"
-            )
-        
-        with col3:
-            diff = v3_result['total_monthly'] - v2_cost
-            diff_pct = (diff / v2_cost * 100) if v2_cost > 0 else 0
-            st.metric(
-                "Difference",
-                f"${diff:,.0f}",
-                f"{diff_pct:+.1f}%",
-                help="v3 - v2"
-            )
-        
-        # Analysis
-        if abs(diff_pct) > 15:
-            st.warning(f"⚠️ Significant difference ({diff_pct:+.1f}%). Review tier assignment and add-on logic.")
-        elif abs(diff_pct) < 5:
-            st.success("✓ v2 and v3 are closely aligned (< 5% difference)")
-        else:
-            st.info(f"ℹ️ Moderate difference ({diff_pct:+.1f}%). Expected due to tier-based model.")
-    
-    except Exception as e:
-        st.error(f"v2 comparison failed: {str(e)}")
