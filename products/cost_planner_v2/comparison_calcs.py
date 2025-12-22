@@ -28,15 +28,17 @@ from products.cost_planner_v2.utils.regional_data import RegionalDataProvider
 
 # Facility base rates (monthly)
 # Source: Genworth 2024 Cost of Care Survey
+# Updated: December 2025 - Genworth annual median $70,800 = $5,900/month
 FACILITY_BASE_RATES = {
-    "assisted_living": 4500,  # National median
-    "memory_care": 6500,  # Specialized memory care unit
-    "memory_care_high_acuity": 9000,  # High-acuity/skilled memory care
+    "assisted_living": 5900,  # National median (Genworth 2024: $70,800/year)
+    "memory_care": 7400,  # Derived: AL × 1.254 (typical MC premium)
+    "memory_care_high_acuity": 9400,  # Derived: MC + high-acuity increment
 }
 
 # In-Home Care hourly rate (national baseline)
 # Scaled by regional multiplier, then multiplied by hours/month
-INHOME_HOURLY_BASE = 30.00  # National median for home health aide
+# Source: Genworth 2024 Cost of Care Survey
+INHOME_HOURLY_BASE = 34.00  # National median for home health aide (Genworth 2024)
 
 # Home Carry Cost baseline (monthly)
 # Mortgage/rent + property tax + insurance + maintenance
