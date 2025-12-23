@@ -113,13 +113,7 @@ def render():
         st.session_state["cost_v2_quick_zip"] = typed_zip
         meta["zip_last_update"] = now
 
-        # Only estimate home carry if user hasn't manually set it
-        if not inputs.get("home_carry_user_set", False):
-            est = lookup_zip(typed_zip, kind="owner")
-            if est and est.get("amount") is not None:
-                inputs["home_carry"] = float(est["amount"])
-
-        print(f"[INTRO_ZIP] auto-update zip={typed_zip} home_carry={inputs.get('home_carry')}")
+        print(f"[INTRO_ZIP] auto-update zip={typed_zip}")
 
         # Blur focus so it doesn't trap
         st.markdown(
@@ -142,70 +136,11 @@ def render():
 
         print(f"[ZIP_STATE] displaying zip={inputs.get('zip')} region={region_label}")
 
-    # Preference-aware hint (small polish)
-    gcp_data = st.session_state.get("gcp", {})
-    move_pref = gcp_data.get("move_preference")
-    if move_pref == "stay_home":
-        st.markdown(
-            personalize('<div class="cp-hint">We\'ll include {NAME_POS} monthly home costs since {NAME} plans to stay home.</div>'),
-            unsafe_allow_html=True
-        )
-    elif move_pref in ("open", "uncertain"):
-        st.markdown(
-            personalize('<div class="cp-hint">You can compare {NAME} staying home or moving; ZIP will localize costs.</div>'),
-            unsafe_allow_html=True
-        )
-
-    st.markdown("")
-
-    # Question 2: Monthly Home Carry
-    st.markdown(personalize("#### What are {NAME_POS} monthly household costs?"))
-    st.caption(
-        "💡 Typical monthly cost to keep the household running "
-        "(mortgage/rent, utilities, insurance, groceries)."
+    # Hint about cost comparison
+    st.markdown(
+        personalize('<div class="cp-hint">We\'ll show you the cost of different care options based on {NAME_POS} location and needs.</div>'),
+        unsafe_allow_html=True
     )
-
-    # Read-before-write: Only initialize if missing, never overwrite on rerun
-    if inputs.get("home_carry") is None:
-        stored_zip = inputs.get("zip")
-        if stored_zip and len(str(stored_zip)) == 5:
-            est = lookup_zip(stored_zip, kind="owner")
-            if est and est.get("amount") is not None:
-                inputs["home_carry"] = float(est["amount"])
-                print(f"[INTRO_HOME_CARRY] Initialized from ZIP: {inputs['home_carry']}")
-            else:
-                inputs["home_carry"] = 0.0
-        else:
-            inputs["home_carry"] = 0.0
-
-    # Get current value from session state
-    home_carry_value = float(inputs.get("home_carry") or 0.0)
-
-    # Salt widget key with ZIP so it mounts fresh when ZIP changes
-    # This prevents client-side stale value from overwriting server value
-    carry_key = f"intro_home_carry__{inputs.get('zip', '')}"
-
-    # Render number input using session value (no magic defaults)
-    new_home_carry = st.number_input(
-        "Monthly Home Carry Cost",
-        value=home_carry_value,
-        min_value=0.0,
-        max_value=50000.0,
-        step=50.0,
-        format="%.0f",
-        key=carry_key,
-        label_visibility="collapsed"
-    )
-
-    # Track user changes
-    if new_home_carry != home_carry_value:
-        inputs["home_carry_user_set"] = True
-        inputs["home_carry"] = float(new_home_carry)
-        st.session_state.comparison_home_carry_cost = float(new_home_carry)
-        print(f"[INTRO_HOME_CARRY] user_set={inputs['home_carry']}")
-    else:
-        # Sync to legacy key
-        st.session_state.comparison_home_carry_cost = home_carry_value
 
     st.markdown("")
 

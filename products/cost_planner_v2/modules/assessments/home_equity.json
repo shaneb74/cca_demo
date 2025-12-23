@@ -1,0 +1,298 @@
+{
+  "key": "home_equity",
+  "title": "Home & Housing Analysis",
+  "icon": "🏠",
+  "description": "Housing situation and home equity strategy for {NAME}",
+  "estimated_time": "2-4 min",
+  "required": false,
+  "sort_order": 6,
+  "sections": [
+    {
+      "id": "intro",
+      "type": "intro",
+      "title": "Home & Housing Analysis",
+      "icon": "🏠",
+      "help_text": "Let's understand {NAME_POS} housing situation and explore how housing costs or home equity might be used to support care.",
+      "fields": [],
+      "info_boxes": [
+        {
+          "type": "info",
+          "content": "We'll ask about current housing, monthly costs, and if applicable, options for using home equity to fund care."
+        }
+      ]
+    },
+    {
+      "id": "housing_facts",
+      "title": "Housing Situation",
+      "icon": "🏠",
+      "layout": "single_column",
+      "fields": [
+        {
+          "key": "owns_home",
+          "label": "Does {NAME} currently own, rent, or have another housing arrangement?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            {
+              "value": "own",
+              "label": "Own a home"
+            },
+            {
+              "value": "rent",
+              "label": "Rent"
+            },
+            {
+              "value": "other",
+              "label": "Other (living with family, etc.)"
+            }
+          ],
+          "default": "own"
+        },
+        {
+          "key": "home_value",
+          "label": "Current market value of the home",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 10000000,
+          "step": 10000,
+          "default": 0,
+          "help": "Estimated current market value (best guess is fine)",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "own"
+          }
+        },
+        {
+          "key": "mortgage_balance",
+          "label": "Remaining mortgage balance",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 10000000,
+          "step": 5000,
+          "default": 0,
+          "help": "Total amount left on the mortgage (enter 0 if paid off)",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "own"
+          }
+        },
+        {
+          "key": "monthly_carry",
+          "label": "Monthly housing costs",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 50000,
+          "step": 100,
+          "default": 0,
+          "help": "Total monthly costs: mortgage payment, property taxes, insurance, HOA fees, utilities, maintenance",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "own"
+          }
+        },
+        {
+          "key": "home_plan",
+          "label": "What are you considering doing with the home?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            {
+              "value": "keep",
+              "label": "Keep the home"
+            },
+            {
+              "value": "sell",
+              "label": "Sell"
+            },
+            {
+              "value": "rent_out",
+              "label": "Rent out"
+            },
+            {
+              "value": "reverse_mortgage",
+              "label": "Reverse mortgage"
+            },
+            {
+              "value": "not_sure",
+              "label": "Not sure"
+            }
+          ],
+          "default": "not_sure",
+          "help": "Select the option you're leaning toward - we'll show you what each means financially",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "own"
+          }
+        },
+        {
+          "key": "local_rent",
+          "label": "Potential monthly rental income",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 50000,
+          "step": 100,
+          "default": 0,
+          "help": "Approximate monthly rent the home could generate if rented out",
+          "visible_if": {
+            "field": "home_plan",
+            "equals": "rent_out"
+          }
+        },
+        {
+          "key": "commission_rate",
+          "label": "Real estate commission (%)",
+          "type": "number",
+          "required": false,
+          "min": 4,
+          "max": 8,
+          "step": 0.5,
+          "default": 6,
+          "help": "Typical commissions range from 4-8%. Recent surveys show the national average is around 5.5-6%.",
+          "visible_if": {
+            "field": "home_plan",
+            "equals": "sell"
+          }
+        },
+        {
+          "key": "monthly_rent",
+          "label": "Monthly rent amount",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 50000,
+          "step": 100,
+          "default": 0,
+          "help": "Current monthly rent payment",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "rent"
+          }
+        },
+        {
+          "key": "rental_plan",
+          "label": "How should this rent be treated once care begins?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            {
+              "value": "continue",
+              "label": "Continue lease during care",
+              "help": "Monthly rent will continue to be included in costs"
+            },
+            {
+              "value": "end_lease",
+              "label": "End lease when care starts",
+              "help": "Rent will no longer be included once care begins"
+            },
+            {
+              "value": "not_sure",
+              "label": "Not sure yet",
+              "help": "We'll keep rent included for now (conservative approach)"
+            }
+          ],
+          "default": "not_sure",
+          "help": "This determines whether rent is included in ongoing monthly care costs",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "rent"
+          }
+        },
+        {
+          "key": "household_contribution_type",
+          "label": "Do they contribute to household housing expenses?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            {
+              "value": "no",
+              "label": "No - no regular housing costs"
+            },
+            {
+              "value": "fixed",
+              "label": "Yes - fixed monthly contribution"
+            },
+            {
+              "value": "variable",
+              "label": "Yes - variable or uncertain"
+            }
+          ],
+          "default": "no",
+          "help": "Whether {NAME} pays any amount toward housing",
+          "visible_if": {
+            "field": "owns_home",
+            "equals": "other"
+          }
+        },
+        {
+          "key": "monthly_household_contribution",
+          "label": "Monthly household contribution",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 50000,
+          "step": 50,
+          "default": 0,
+          "help": "Fixed monthly amount contributed toward housing (leave 0 if variable/uncertain)",
+          "visible_if": {
+            "field": "household_contribution_type",
+            "not_equals": "no"
+          }
+        }
+      ],
+      "info_boxes": []
+    },
+    {
+      "id": "strategy_comparison",
+      "title": "Strategy Comparison",
+      "icon": "📊",
+      "layout": "single_column",
+      "fields": [
+        {
+          "key": "reverse_mortgage_monthly_draw",
+          "label": "How much would you draw monthly from reverse mortgage?",
+          "type": "currency",
+          "required": false,
+          "min": 0,
+          "max": 20000,
+          "step": 100,
+          "default": 0,
+          "help": "Monthly amount you'd use from the reverse mortgage to supplement income. We'll show how this impacts your care affordability.",
+          "visible_if": {
+            "field": "home_plan",
+            "equals": "reverse_mortgage"
+          }
+        },
+        {
+          "key": "return_home",
+          "label": "Is returning to the home after care a priority?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            {
+              "value": "yes",
+              "label": "Yes - prefer to keep the home"
+            },
+            {
+              "value": "no",
+              "label": "No - can sell or rent"
+            },
+            {
+              "value": "unsure",
+              "label": "Unsure"
+            }
+          ],
+          "help": "Whether maintaining ownership is important for future return",
+          "visible_if": {
+            "field": "home_plan",
+            "in": ["sell", "reverse_mortgage"]
+          }
+        }
+      ],
+      "info_boxes": []
+    }
+  ]
+}

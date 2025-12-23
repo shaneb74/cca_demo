@@ -157,6 +157,22 @@ def _render_medication_mobility_section() -> None:
                 ),
                 key="gcp_test_mobility"
             )
+            
+            st.session_state.gcp_transfers = st.radio(
+                "Transfer Assistance",
+                options=["independent", "standby", "one_person", "two_person", "lift"],
+                format_func=lambda x: {
+                    "independent": "No assistance",
+                    "standby": "Stand-by assist",
+                    "one_person": "1-person assist",
+                    "two_person": "2-person assist",
+                    "lift": "Mechanical lift"
+                }[x],
+                index=["independent", "standby", "one_person", "two_person", "lift"].index(
+                    st.session_state.get("gcp_transfers", "independent")
+                ),
+                key="gcp_test_transfers"
+            )
         
         with col2:
             st.session_state.gcp_falls = st.radio(
@@ -296,6 +312,21 @@ def _render_daily_living_section() -> None:
                 default=st.session_state.get("gcp_badls", []),
                 key="gcp_test_badls"
             )
+            
+            st.session_state.gcp_incontinence = st.radio(
+                "Incontinence Management",
+                options=["none", "occasional", "frequent_reminders", "complete"],
+                format_func=lambda x: {
+                    "none": "No issues",
+                    "occasional": "Occasional accidents",
+                    "frequent_reminders": "Frequent - needs reminders",
+                    "complete": "Complete assistance"
+                }[x],
+                index=["none", "occasional", "frequent_reminders", "complete"].index(
+                    st.session_state.get("gcp_incontinence", "none")
+                ),
+                key="gcp_test_incontinence"
+            )
         
         with col2:
             st.session_state.gcp_primary_support = st.radio(
@@ -328,15 +359,33 @@ def _render_daily_living_section() -> None:
         
         # Hours per day
         st.markdown("---")
-        st.session_state.gcp_hours_per_day = st.radio(
-            "Hours per Day of Assistance",
-            options=["<1h", "1-3h", "4-8h", "12-16h", "24h"],
-            index=["<1h", "1-3h", "4-8h", "12-16h", "24h"].index(
-                st.session_state.get("gcp_hours_per_day", "1-3h")
-            ),
-            key="gcp_test_hours",
-            horizontal=True
-        )
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.session_state.gcp_hours_per_day = st.radio(
+                "Hours per Day of Assistance",
+                options=["<1h", "1-3h", "4-8h", "12-16h", "24h"],
+                index=["<1h", "1-3h", "4-8h", "12-16h", "24h"].index(
+                    st.session_state.get("gcp_hours_per_day", "1-3h")
+                ),
+                key="gcp_test_hours"
+            )
+        
+        with col2:
+            st.session_state.gcp_days_per_week = st.radio(
+                "Days per Week Care Needed",
+                options=["1-2", "3-4", "5-6", "7"],
+                format_func=lambda x: {
+                    "1-2": "1-2 days (occasional)",
+                    "3-4": "3-4 days (part-time)",
+                    "5-6": "5-6 days (near-daily)",
+                    "7": "7 days (every day)"
+                }[x],
+                index=["1-2", "3-4", "5-6", "7"].index(
+                    st.session_state.get("gcp_days_per_week", "5-6")
+                ),
+                key="gcp_test_days"
+            )
 
 
 def _render_move_preferences_section() -> None:
@@ -433,6 +482,7 @@ def _calculate_and_store() -> None:
         # Medication & Mobility
         "meds_complexity": st.session_state.get("gcp_meds_complexity", "simple"),
         "mobility": st.session_state.get("gcp_mobility", "independent"),
+        "transfers": st.session_state.get("gcp_transfers", "independent"),
         "falls": st.session_state.get("gcp_falls", "none"),
         "chronic_conditions": st.session_state.get("gcp_chronic", []),
         
@@ -445,9 +495,11 @@ def _calculate_and_store() -> None:
         # Daily Living
         "help_overall": st.session_state.get("gcp_help_overall", "some_help"),
         "badls": st.session_state.get("gcp_badls", []),
+        "incontinence": st.session_state.get("gcp_incontinence", "none"),
         "iadls": st.session_state.get("gcp_iadls", []),
         "primary_support": st.session_state.get("gcp_primary_support", "family"),
         "hours_per_day": st.session_state.get("gcp_hours_per_day", "1-3h"),
+        "days_per_week": st.session_state.get("gcp_days_per_week", "5-6"),
         
         # Move Preferences
         "move_preference": st.session_state.get("gcp_move_preference", "2"),

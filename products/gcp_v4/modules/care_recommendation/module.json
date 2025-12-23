@@ -84,7 +84,7 @@
           "id": "living_situation",
           "type": "string",
           "select": "single",
-          "label": "Current living situation?",
+          "label": "What is {NAME_POS} current living situation?",
           "required": true,
           "default": "alone",
           "options": [
@@ -99,7 +99,7 @@
           "id": "isolation",
           "type": "string",
           "select": "single",
-          "label": "Is this person's home located far from family, care providers, or essential services?",
+          "label": "Is {NAME_POS} home located far from family, care providers, or essential services?",
           "required": true,
           "default": "accessible",
           "options": [
@@ -126,7 +126,7 @@
           "id": "meds_complexity",
           "type": "string",
           "select": "single",
-          "label": "How complex is this person's medication routine?",
+          "label": "How complex is {NAME_POS} medication routine?",
           "required": true,
           "options": [
             { "label": "None", "value": "none", "score": 0 },
@@ -147,6 +147,21 @@
             { "label": "Uses cane or walker", "value": "walker", "score": 1, "flags": ["moderate_mobility"] },
             { "label": "Uses wheelchair or scooter", "value": "wheelchair", "score": 2, "flags": ["high_mobility_dependence"] },
             { "label": "Bed-bound or limited mobility", "value": "bedbound", "score": 3, "flags": ["high_mobility_dependence"] }
+          ],
+          "ui": { "widget": "chip", "orientation": "vertical" }
+        },
+        {
+          "id": "transfers",
+          "type": "string",
+          "select": "single",
+          "label": "Does {NAME} need help moving from bed/chair/toilet?",
+          "required": true,
+          "options": [
+            { "label": "No assistance needed", "value": "independent", "score": 0 },
+            { "label": "Stand-by assist (verbal cues only)", "value": "standby", "score": 1, "flags": ["transfer_standby"] },
+            { "label": "1-person physical assist", "value": "one_person", "score": 2, "flags": ["transfer_assistance_1person", "moderate_mobility"] },
+            { "label": "2-person assist required", "value": "two_person", "score": 3, "flags": ["transfer_assistance_2person", "high_mobility_dependence"] },
+            { "label": "Mechanical lift needed", "value": "lift", "score": 4, "flags": ["transfer_lift_required", "high_mobility_dependence"] }
           ],
           "ui": { "widget": "chip", "orientation": "vertical" }
         },
@@ -184,20 +199,6 @@
             "widget": "multi_chip",
             "allow_custom": true,
             "placeholder": "Select or add conditions",
-            "orientation": "vertical"
-          }
-        },
-        {
-          "id": "additional_conditions",
-          "type": "string",
-          "select": "multi",
-          "label": "List any additional chronic conditions (type and press Add)",
-          "required": false,
-          "options": [],
-          "ui": {
-            "widget": "multi_chip",
-            "allow_custom": true,
-            "placeholder": "Type and press Add to include conditions",
             "orientation": "vertical"
           }
         }
@@ -288,7 +289,7 @@
     {
       "id": "daily_living",
       "title": "Daily Living",
-      "description": "Understand the person's daily support needs.",
+      "description": "Understand {NAME_POS} daily support needs.",
       "navi_guidance": {
         "section_purpose": "Determine level of assistance needed for daily activities (ADLs and IADLs)",
         "why_this_matters": "The amount of help needed with daily tasks is the primary driver of care recommendations",
@@ -315,7 +316,7 @@
           "id": "badls",
           "type": "string",
           "select": "multi",
-          "label": "Which basic daily activities does this person need help with? (select all that apply)",
+          "label": "Which basic daily activities does {NAME} need help with? (select all that apply)",
           "required": false,
           "options": [
             { "label": "Bathing/Showering", "value": "bathing", "score": 1, "flags": ["moderate_dependence", "veteran_aanda_risk"] },
@@ -334,10 +335,24 @@
           }
         },
         {
+          "id": "incontinence",
+          "type": "string",
+          "select": "single",
+          "label": "Does {NAME} need help with bladder or bowel management?",
+          "required": true,
+          "options": [
+            { "label": "No issues", "value": "none", "score": 0 },
+            { "label": "Occasional accidents", "value": "occasional", "score": 1, "flags": ["incontinence_occasional"] },
+            { "label": "Frequent - needs reminders", "value": "frequent_reminders", "score": 2, "flags": ["incontinence_management"] },
+            { "label": "Complete assistance needed", "value": "complete", "score": 3, "flags": ["incontinence_management", "high_dependence"] }
+          ],
+          "ui": { "widget": "chip", "orientation": "vertical" }
+        },
+        {
           "id": "iadls",
           "type": "string",
           "select": "multi",
-          "label": "Which daily tasks does this person need help with? (select all that apply)",
+          "label": "Which daily tasks does {NAME} need help with? (select all that apply)",
           "required": false,
           "options": [
             { "label": "Meal preparation", "value": "meal_prep", "score": 1, "flags": ["moderate_dependence", "veteran_aanda_risk"] },
@@ -359,7 +374,7 @@
           "id": "hours_per_day",
           "type": "string",
           "select": "single",
-          "label": "How many hours per day of assistance does this person typically receive?",
+          "label": "How many hours per day of assistance does {NAME} typically receive?",
           "required": true,
           "options": [
             { "label": "Less than 1 hour", "value": "<1h", "score": 0, "flags": ["no_support"] },
@@ -369,6 +384,20 @@
             { "label": "24-hour support", "value": "24h", "score": 4 }
           ],
           "ui": { "widget": "chip", "orientation": "vertical" }
+        },
+        {
+          "id": "days_per_week",
+          "type": "string",
+          "select": "single",
+          "label": "How many days per week is care typically needed?",
+          "required": true,
+          "options": [
+            { "label": "1-2 days (occasional/respite)", "value": "1-2", "score": 1, "flags": ["respite_schedule"] },
+            { "label": "3-4 days (part-time)", "value": "3-4", "score": 2, "flags": ["part_time_schedule"] },
+            { "label": "5-6 days (near-daily)", "value": "5-6", "score": 3, "flags": ["regular_schedule"] },
+            { "label": "7 days (every day)", "value": "7", "score": 4, "flags": ["daily_schedule"] }
+          ],
+          "ui": { "widget": "chip", "orientation": "horizontal" }
         },
         {
           "id": "primary_support",
@@ -390,13 +419,6 @@
       "id": "move_preferences",
       "title": "Move Preferences",
       "description": "Help us understand this person's openness to moving to a care facility.",
-      "show_if": {
-        "any": [
-          { "key": "gcp_recommendation_category", "equals": "assisted_living" },
-          { "key": "gcp_recommendation_category", "equals": "memory_care" },
-          { "key": "gcp_recommendation_category", "equals": "memory_care_high_acuity" }
-        ]
-      },
       "navi_guidance": {
         "section_purpose": "Almost there — one more question before your personalized recommendation.",
         "why_this_matters": "Willingness to move affects care planning and family dynamics",
