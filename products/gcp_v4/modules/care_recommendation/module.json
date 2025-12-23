@@ -99,7 +99,7 @@
           "id": "isolation",
           "type": "string",
           "select": "single",
-          "label": "Is this person's home located far from family, care providers, or essential services?",
+          "label": "Is {NAME_POS} home located far from family, care providers, or essential services?",
           "required": true,
           "default": "accessible",
           "options": [
@@ -126,7 +126,7 @@
           "id": "meds_complexity",
           "type": "string",
           "select": "single",
-          "label": "How complex is this person's medication routine?",
+          "label": "How complex is {NAME_POS} medication routine?",
           "required": true,
           "options": [
             { "label": "None", "value": "none", "score": 0 },
@@ -199,20 +199,6 @@
             "widget": "multi_chip",
             "allow_custom": true,
             "placeholder": "Select or add conditions",
-            "orientation": "vertical"
-          }
-        },
-        {
-          "id": "additional_conditions",
-          "type": "string",
-          "select": "multi",
-          "label": "List any additional chronic conditions (type and press Add)",
-          "required": false,
-          "options": [],
-          "ui": {
-            "widget": "multi_chip",
-            "allow_custom": true,
-            "placeholder": "Type and press Add to include conditions",
             "orientation": "vertical"
           }
         }
@@ -303,7 +289,7 @@
     {
       "id": "daily_living",
       "title": "Daily Living",
-      "description": "Understand the person's daily support needs.",
+      "description": "Understand {NAME_POS} daily support needs.",
       "navi_guidance": {
         "section_purpose": "Determine level of assistance needed for daily activities (ADLs and IADLs)",
         "why_this_matters": "The amount of help needed with daily tasks is the primary driver of care recommendations",
@@ -330,7 +316,7 @@
           "id": "badls",
           "type": "string",
           "select": "multi",
-          "label": "Which basic daily activities does this person need help with? (select all that apply)",
+          "label": "Which basic daily activities does {NAME} need help with? (select all that apply)",
           "required": false,
           "options": [
             { "label": "Bathing/Showering", "value": "bathing", "score": 1, "flags": ["moderate_dependence", "veteran_aanda_risk"] },
@@ -366,7 +352,7 @@
           "id": "iadls",
           "type": "string",
           "select": "multi",
-          "label": "Which daily tasks does this person need help with? (select all that apply)",
+          "label": "Which daily tasks does {NAME} need help with? (select all that apply)",
           "required": false,
           "options": [
             { "label": "Meal preparation", "value": "meal_prep", "score": 1, "flags": ["moderate_dependence", "veteran_aanda_risk"] },
@@ -388,7 +374,7 @@
           "id": "hours_per_day",
           "type": "string",
           "select": "single",
-          "label": "How many hours per day of assistance does this person typically receive?",
+          "label": "How many hours per day of assistance does {NAME} typically receive?",
           "required": true,
           "options": [
             { "label": "Less than 1 hour", "value": "<1h", "score": 0, "flags": ["no_support"] },
