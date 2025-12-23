@@ -657,7 +657,6 @@ USER_PERSIST_KEYS = {
     "cost_planner_v2_va_benefits",  # VA benefits assessment state
     "cost_planner_v2_health_insurance",  # Health insurance assessment state
     "cost_planner_v2_life_insurance",  # Life insurance assessment state
-    "cost_planner_v2_medicaid_navigation",  # Medicaid navigation assessment state
     # Cost Planner v2 additional state keys
     "cost.inputs",  # ZIP, hours, keep_home, owner_tenant
     "cost.compare_inhome",  # Toggle for in-home comparison (AL/MC tiers)
