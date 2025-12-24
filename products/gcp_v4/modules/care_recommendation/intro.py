@@ -171,7 +171,8 @@ def render_intro_step() -> None:
     )
 
     # Build title
-    st.markdown(f'<h1 class="gcp-page-title">{html_escape(title_text) if title_text else "Let\'s get you the right support"}</h1>', unsafe_allow_html=True)
+    default_title = "Let's get you the right support"
+    st.markdown(f'<h1 class="gcp-page-title">{html_escape(title_text) if title_text else default_title}</h1>', unsafe_allow_html=True)
     
     # Helper text
     if helper_text:
