@@ -56,28 +56,11 @@ def render_intro_step() -> None:
     helper_text = copy.get("helper_self") if is_self else copy.get("helper_supporter")
     if not helper_text:
         helper_text = copy.get("helper")
-    if helper_text:
-        helper_text = html_escape(helper_text)
 
-    title_text = html_escape(copy.get("page_title", ""))
-    lead_text = html_escape(copy.get("lead", ""))
+    title_text = copy.get("page_title", "")
+    lead_text = copy.get("lead", "")
 
     points = [point for point in copy.get("points", []) if point]
-    
-    # Build clean info cards for key points
-    cards_html = ""
-    if points:
-        card_icons = ["🎯", "💬", "⏱️"]  # Icons for different points
-        cards = ""
-        for i, point in enumerate(points[:3]):  # Limit to 3 cards
-            icon = card_icons[i] if i < len(card_icons) else "✓"
-            cards += f"""
-                <div class="info-card">
-                    <div class="info-icon">{icon}</div>
-                    <p class="info-text">{html_escape(point)}</p>
-                </div>
-            """
-        cards_html = f'<div class="info-cards">{cards}</div>'
 
     # Inject clean CSS matching Discovery Learning and Hub aesthetic
     st.markdown(
@@ -90,59 +73,18 @@ def render_intro_step() -> None:
             padding: 0 24px 32px;
           }
           
-          /* === Navi Intro Card (Compact) === */
-          .navi-intro-card {
-            background: linear-gradient(135deg, #f0f4ff 0%, #f8f9fe 100%);
-            border: 2px solid #e0e7ff;
-            border-radius: 12px;
-            padding: 1.25rem;
-            margin: 0 0 2rem;
-            box-shadow: 0 2px 8px rgba(124, 92, 255, 0.1);
-          }
-          .navi-intro-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-          }
-          .navi-intro-icon {
-            font-size: 1.25rem;
-          }
-          .navi-intro-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #0E1E54;
-            margin: 0;
-          }
-          .navi-intro-message {
-            font-size: 0.95rem;
-            color: #4b4f63;
-            line-height: 1.5;
-            margin: 0;
-          }
-          
           /* === Main Title === */
-          .page-title {
+          .gcp-page-title {
             font-size: 2.5rem;
             font-weight: 700;
             color: #0E1E54;
             text-align: center;
-            margin: 2rem 0 1rem;
+            margin: 1rem 0 1rem;
             line-height: 1.2;
           }
           
-          /* === Lead Text === */
-          .lead-text {
-            font-size: 1.1rem;
-            color: #4b4f63;
-            text-align: center;
-            max-width: 700px;
-            margin: 0 auto 1.5rem;
-            line-height: 1.6;
-          }
-          
           /* === Helper Text === */
-          .helper-text {
+          .gcp-helper-text {
             font-size: 1rem;
             color: #1f3c88;
             font-weight: 600;
@@ -151,14 +93,14 @@ def render_intro_step() -> None:
           }
           
           /* === Info Cards Grid === */
-          .info-cards {
+          .gcp-info-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1.25rem;
             margin: 0 0 2rem;
           }
           
-          .info-card {
+          .gcp-info-card {
             background: white;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -167,17 +109,17 @@ def render_intro_step() -> None:
             text-align: center;
           }
           
-          .info-card:hover {
+          .gcp-info-card:hover {
             box-shadow: 0 4px 16px rgba(0,0,0,0.12);
             transform: translateY(-2px);
           }
           
-          .info-icon {
+          .gcp-info-icon {
             font-size: 2rem;
             margin-bottom: 0.75rem;
           }
           
-          .info-text {
+          .gcp-info-text {
             font-size: 0.95rem;
             color: #4b4f63;
             line-height: 1.5;
@@ -185,7 +127,7 @@ def render_intro_step() -> None:
           }
           
           /* === CTA Section === */
-          .cta-section {
+          .gcp-cta-section {
             background: linear-gradient(135deg, #f8f9fe 0%, #f0f4ff 100%);
             border: 1px solid #e0e7ff;
             border-radius: 12px;
@@ -194,35 +136,32 @@ def render_intro_step() -> None:
             margin: 2rem 0 0;
           }
           
-          .cta-title {
+          .gcp-cta-title {
             font-size: 1.25rem;
             font-weight: 600;
             color: #0E1E54;
             margin: 0 0 0.5rem;
           }
           
-          .cta-subtitle {
+          .gcp-cta-subtitle {
             font-size: 0.95rem;
             color: #6b7280;
-            margin: 0 0 1.5rem;
+            margin: 0;
           }
           
           /* === Mobile Responsive === */
           @media (max-width: 768px) {
-            .page-title {
+            .gcp-page-title {
               font-size: 2rem;
             }
-            .lead-text {
-              font-size: 1rem;
-            }
-            .info-cards {
+            .gcp-info-cards {
               grid-template-columns: 1fr;
               gap: 1rem;
             }
-            .info-card {
+            .gcp-info-card {
               padding: 1.25rem;
             }
-            .cta-section {
+            .gcp-cta-section {
               padding: 1.5rem;
             }
           }
@@ -231,31 +170,39 @@ def render_intro_step() -> None:
         unsafe_allow_html=True,
     )
 
-    # Build layout HTML
-    navi_intro = f"""
-        <div class="navi-intro-card">
-            <div class="navi-intro-header">
-                <span class="navi-intro-icon">✨</span>
-                <span class="navi-intro-title">NAVI</span>
-            </div>
-            <p class="navi-intro-message">{lead_text if lead_text else "Answer these questions to match the right level of support."}</p>
+    # Build title
+    st.markdown(f'<h1 class="gcp-page-title">{html_escape(title_text) if title_text else "Let\'s get you the right support"}</h1>', unsafe_allow_html=True)
+    
+    # Helper text
+    if helper_text:
+        st.markdown(f'<p class="gcp-helper-text">{html_escape(helper_text)}</p>', unsafe_allow_html=True)
+    
+    # Build info cards using columns for better rendering
+    if points:
+        card_icons = ["🎯", "💬", "⏱️"]
+        
+        st.markdown('<div class="gcp-info-cards">', unsafe_allow_html=True)
+        
+        cols = st.columns(len(points[:3]))
+        for i, point in enumerate(points[:3]):
+            icon = card_icons[i] if i < len(card_icons) else "✓"
+            with cols[i]:
+                st.markdown(f"""
+                    <div class="gcp-info-card">
+                        <div class="gcp-info-icon">{icon}</div>
+                        <p class="gcp-info-text">{html_escape(point)}</p>
+                    </div>
+                """, unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # CTA section
+    st.markdown("""
+        <div class="gcp-cta-section">
+            <h3 class="gcp-cta-title">Ready to begin?</h3>
+            <p class="gcp-cta-subtitle">This assessment takes about 2 minutes and saves automatically.</p>
         </div>
-    """
-
-    layout_html = f"""
-        <div id="gcp-intro">
-          {navi_intro}
-          <h1 class="page-title">{title_text if title_text else "Let's get you the right support"}</h1>
-          {f'<p class="helper-text">{helper_text}</p>' if helper_text else ''}
-          {cards_html}
-          <div class="cta-section">
-            <h3 class="cta-title">Ready to begin?</h3>
-            <p class="cta-subtitle">This assessment takes about 2 minutes and saves automatically.</p>
-          </div>
-        </div>
-    """
-
-    st.markdown(layout_html, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 
 def should_use_custom_intro() -> bool:
