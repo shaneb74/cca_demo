@@ -34,14 +34,9 @@
       "id": "intro",
       "title": "",
       "type": "info",
-      "content": [
-        "This quick check helps match {NAME} with the right level of support. We'll ask about safety, day-to-day help, health, and who's involved in care. It takes about two minutes, saves automatically, and you can pause anytime.",
-        "",
-        "Answer for {NAME} — the person who needs help — and we'll guide your next steps."
-      ],
       "actions": [
-        { "label": "Get Started", "action": "next" },
-        { "label": "Back to Lobby", "action": "route", "value": "hub_lobby" }
+        { "label": "Start", "action": "next" },
+        { "label": "← Back to Lobby", "action": "route", "value": "hub_lobby" }
       ],
       "navi_guidance": {
         "section_purpose": "Set expectations for the guided plan.",
