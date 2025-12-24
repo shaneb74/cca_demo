@@ -124,13 +124,15 @@ def render():
         estimate_data = intro_estimate["estimate"]
         # Handle both dict (persisted) and CostEstimate object (legacy)
         if isinstance(estimate_data, dict):
-            estimated_monthly_cost = estimate_data["monthly_adjusted"]
+            # FIX: Use monthly_total instead of monthly_adjusted to match what user saw in Quick Estimate
+            # monthly_adjusted = care-only, monthly_total = care + home carry (what was displayed)
+            estimated_monthly_cost = estimate_data.get("monthly_total", estimate_data["monthly_adjusted"])
             # [FA_DEBUG] Log what FA received
             print("\n[FA_DEBUG] ========== FA RECEIVED FROM QUICK ESTIMATE ==========")
             print(f"[FA_DEBUG] Selected Plan: {estimate_data.get('selected_plan', 'N/A')}")
             print(f"[FA_DEBUG] Care Type: {estimate_data.get('care_type', 'N/A')}")
-            print(f"[FA_DEBUG] Care-Only Monthly (RECEIVED): ${estimated_monthly_cost:,.0f}")
-            print(f"[FA_DEBUG] Monthly Total (with home): ${estimate_data.get('monthly_total', 'N/A'):,.0f}")
+            print(f"[FA_DEBUG] Monthly Total Used (care+home): ${estimated_monthly_cost:,.0f}")
+            print(f"[FA_DEBUG] Care-Only Would Be: ${estimate_data.get('monthly_adjusted', 0):,.0f}")
             print("[FA_DEBUG] ====================================================\n")
         else:
             estimated_monthly_cost = estimate_data.monthly_adjusted

@@ -67,6 +67,28 @@ def _build_testing_tiles() -> list[ProductTileHub]:
         )
     )
     
+    # Cost Planner v3 Test Tool
+    tiles.append(
+        ProductTileHub(
+            key="cost_planner_v3_test",
+            title="Cost Planner v3 Test",
+            desc="Test tier-based cost calculation engine",
+            blurb="Test Cost Planner v3 with GCP outcomes. Input flags, see tier assignments, "
+                  "add-on calculations, and confidence ranges. Compare v2 vs v3 side-by-side. "
+                  "Validate tier overflow logic (AL→MC→MC-HA).",
+            image_square=None,
+            meta_lines=["💰 Tier calculation", "📊 v2 vs v3 compare", "🎯 Range confidence"],
+            primary_label="Open v3 Tester",
+            primary_route="?page=cost_v3_test",
+            progress=0,
+            variant="blue",
+            badges=["Testing", "Phase 1"],
+            order=15,
+            visible=True,
+            locked=False,
+        )
+    )
+    
     return tiles
 
 

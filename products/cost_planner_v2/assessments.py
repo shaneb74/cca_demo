@@ -26,6 +26,7 @@ from products.cost_planner_v2.utils.financial_helpers import (
     normalize_asset_data,
     normalize_income_data,
 )
+from products.cost_planner_v2.utils.home_equity_helpers import normalize_home_equity_data
 from products.cost_planner_v2.utils.va_rates import get_monthly_va_disability
 
 # Assessments that use the single-page progressive disclosure layout
@@ -35,6 +36,7 @@ _SINGLE_PAGE_ASSESSMENTS: set[str] = {
     "va_benefits",
     "health_insurance",
     "life_insurance",
+    "home_equity",
 }
 
 
@@ -291,6 +293,25 @@ def _render_assessment_card(assessment: dict[str, Any], product_key: str) -> Non
                 coverage_type = data.get("health_coverage_type", "")
                 if coverage_type:
                     summary_text = coverage_type.replace("_", " ").title()
+            elif key == "home_equity":
+                owns_home = data.get("owns_home", "other")
+                home_equity = data.get("home_equity", 0)
+                strategies = data.get("strategies", {})
+                num_strategies = len(strategies)
+                
+                if owns_home == "own":
+                    if home_equity > 0:
+                        summary_text = f"${home_equity:,.0f} equity"
+                    else:
+                        summary_text = "Homeowner"
+                    if num_strategies > 0:
+                        summary_text += f" • {num_strategies} strategies"
+                elif owns_home == "rent":
+                    monthly_carry = data.get("monthly_carry", 0)
+                    if monthly_carry > 0:
+                        summary_text = f"${monthly_carry:,.0f}/mo rent"
+                    else:
+                        summary_text = "Renter"
 
     # Status text and button label
     if is_complete:
@@ -851,6 +872,158 @@ def _render_single_page_sections(
         st.markdown("</div>", unsafe_allow_html=True)
 
 
+def _render_home_equity_results(state: dict[str, Any]) -> None:
+    """Render home equity financial analysis based on selected plan."""
+    
+    # Only render if user owns a home and has actionable plan
+    owns_home = state.get("owns_home")
+    home_plan = state.get("home_plan", "not_sure")
+    
+    # Only show for homeowners with actionable plans (not just "keep")
+    if owns_home != "own" or home_plan not in ["sell", "rent_out", "reverse_mortgage", "not_sure"]:
+        return
+    
+    # Get strategy outputs from augmented state
+    strategy_outputs = state.get("strategy_outputs", {})
+    
+    if not strategy_outputs:
+        return
+    
+    # Determine strategy title based on home_plan
+    plan_titles = {
+        "sell": "Selling Your Home",
+        "rent_out": "Renting Out Your Home", 
+        "reverse_mortgage": "Reverse Mortgage",
+        "not_sure": "Your Options"
+    }
+    
+    title = plan_titles.get(home_plan, "Home Equity Analysis")
+    
+    # Render results header
+    st.markdown(
+        f"""
+        <div style='margin: 40px 0 24px 0; padding-top: 24px; border-top: 2px solid #e5e7eb;'>
+            <h2 style='font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 8px 0;'>
+                {title}
+            </h2>
+            <p style='font-size: 14px; color: #64748b; margin: 0 0 24px 0;'>
+                Financial impact of your housing strategy
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    
+    # Build metrics based on strategy_outputs
+    metrics_html = []
+    
+    # Build metrics based on outputs
+    if "sale_proceeds" in strategy_outputs and strategy_outputs["sale_proceeds"] > 0:
+        metrics_html.append(
+            f"""<div style='margin-bottom: 16px;'>
+                <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                    NET SALE PROCEEDS
+                </div>
+                <div style='font-size: 28px; font-weight: 700; color: #111827;'>
+                    ${strategy_outputs["sale_proceeds"]:,.0f}
+                </div>
+            </div>"""
+        )
+    
+    if "reverse_mortgage_draw" in strategy_outputs and strategy_outputs["reverse_mortgage_draw"] > 0:
+        metrics_html.append(
+            f"""<div style='margin-bottom: 16px;'>
+                <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                    AVAILABLE FROM REVERSE MORTGAGE
+                </div>
+                <div style='font-size: 28px; font-weight: 700; color: #111827;'>
+                    ${strategy_outputs["reverse_mortgage_draw"]:,.0f}
+                </div>
+            </div>"""
+        )
+        
+        if "monthly_draw" in strategy_outputs and strategy_outputs["monthly_draw"] > 0:
+            metrics_html.append(
+                f"""<div style='margin-bottom: 16px;'>
+                    <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                        MONTHLY DRAW
+                    </div>
+                    <div style='font-size: 28px; font-weight: 700; color: #2563eb;'>
+                        ${strategy_outputs["monthly_draw"]:,.0f}/mo
+                    </div>
+                </div>"""
+            )
+            
+            if "draw_duration_months" in strategy_outputs:
+                duration = strategy_outputs["draw_duration_months"]
+                years = duration / 12
+                time_str = f"{years:.1f} years" if duration >= 24 else f"{duration:.0f} months"
+                metrics_html.append(
+                    f"""<div style='margin-bottom: 16px;'>
+                        <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                            LUMP SUM LASTS
+                        </div>
+                        <div style='font-size: 28px; font-weight: 700; color: #111827;'>
+                            {time_str}
+                        </div>
+                    </div>"""
+                )
+            
+            if "monthly_gap_after_draw" in strategy_outputs:
+                gap = strategy_outputs["monthly_gap_after_draw"]
+                metrics_html.append(
+                    f"""<div style='margin-bottom: 16px;'>
+                        <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                            REMAINING MONTHLY GAP
+                        </div>
+                        <div style='font-size: 28px; font-weight: 700; color: #dc2626;'>
+                            ${gap:,.0f}/mo
+                        </div>
+                        <div style='font-size: 13px; color: #64748b; margin-top: 4px;'>
+                            Additional funding needed per month
+                        </div>
+                    </div>"""
+                )
+    
+    if "net_monthly_income" in strategy_outputs:
+        income = strategy_outputs["net_monthly_income"]
+        color = "#10b981" if income > 0 else "#dc2626"
+        sign = "+" if income > 0 else "-"
+        metrics_html.append(
+            f"""<div style='margin-bottom: 16px;'>
+                <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                    NET RENTAL INCOME
+                </div>
+                <div style='font-size: 28px; font-weight: 700; color: {color};'>
+                    {sign}${abs(income):,.0f}/mo
+                </div>
+            </div>"""
+        )
+    
+    if "months_funded" in strategy_outputs and strategy_outputs["months_funded"] > 0:
+        months = strategy_outputs["months_funded"]
+        years = months / 12
+        time_str = f"{years:.1f} years" if months >= 24 else f"{months:.0f} months"
+        metrics_html.append(
+            f"""<div style='margin-bottom: 16px;'>
+                <div style='font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase;'>
+                    CAN FUND CARE FOR
+                </div>
+                <div style='font-size: 28px; font-weight: 700; color: #111827;'>
+                    {time_str}
+                </div>
+            </div>"""
+        )
+    
+    if metrics_html:
+        st.markdown(
+            f"""<div style='display: flex; flex-wrap: wrap; gap: 32px; margin-bottom: 24px;'>
+                {"".join(metrics_html)}
+            </div>""",
+            unsafe_allow_html=True
+        )
+
+
 def render_assessment_page(assessment_key: str, product_key: str = "cost_planner_v2") -> None:
     """
     Render a full assessment page with all sections visible at once.
@@ -921,6 +1094,10 @@ def render_assessment_page(assessment_key: str, product_key: str = "cost_planner
 
     # Progressive disclosure: render sections one at a time based on completion
     _render_progressive_sections(field_sections, state, assessment_key, product_key)
+
+    # Special rendering for home equity analysis results
+    if assessment_key == "home_equity":
+        _render_home_equity_results(state)
 
     # Calculate and show total at bottom using summary config from assessment
     summary_config = assessment_config.get("summary", {})
@@ -1330,6 +1507,10 @@ def _augment_assessment_state(assessment_key: str, state: dict[str, Any]) -> dic
         normalized["net_asset_value"] = max(
             normalized["total_asset_value"] - normalized["total_asset_debt"], 0.0
         )
+        return normalized
+
+    if assessment_key == "home_equity":
+        normalized = normalize_home_equity_data(base_state)
         return normalized
 
     return base_state

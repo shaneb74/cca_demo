@@ -676,7 +676,7 @@ def _get_video_for_tier(tier: str) -> str:
     """
     # Video mapping - will expand as more videos are created
     video_map = {
-        "assisted_living": "EJ-GtXlY8Hw",  # Assisted Living video
+        "assisted_living": "ojTeCwSJ4rk",  # Assisted Living video
         # Add more mappings as videos become available:
         # "memory_care": "VIDEO_ID",
         # "in_home": "VIDEO_ID",
@@ -684,7 +684,7 @@ def _get_video_for_tier(tier: str) -> str:
     }
     
     # Default to assisted living video for now
-    return video_map.get(tier, "EJ-GtXlY8Hw")
+    return video_map.get(tier, "ojTeCwSJ4rk")
 
 
 def _get_tier_description(tier: str, tier_display: str) -> str:

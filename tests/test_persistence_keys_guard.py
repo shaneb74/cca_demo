@@ -26,7 +26,6 @@ def test_user_persist_keys_contract():
         "cost_planner_v2_health_insurance",
         "cost_planner_v2_income",
         "cost_planner_v2_life_insurance",
-        "cost_planner_v2_medicaid_navigation",
         "cost_planner_v2_published",
         "cost_planner_v2_va_benefits",
         "cost_v2_advisor_notes",
