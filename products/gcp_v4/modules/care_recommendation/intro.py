@@ -41,7 +41,7 @@ def load_intro_overrides() -> dict[str, Any]:
 
 
 def render_intro_step() -> None:
-    """Render the custom intro step with responsive layout and tailored copy."""
+    """Render the custom intro step with clean card-based layout matching app aesthetic."""
     # Resolve content (overrides + tokens) using current session context
     ctx = build_token_context(st.session_state, snapshot=None)
     overrides = load_intro_overrides()
@@ -63,79 +63,194 @@ def render_intro_step() -> None:
     lead_text = html_escape(copy.get("lead", ""))
 
     points = [point for point in copy.get("points", []) if point]
-    points_html = ""
+    
+    # Build clean info cards for key points
+    cards_html = ""
     if points:
-        items = "".join(
-            f"<li><span class='dot'></span><span>{html_escape(point)}</span></li>" for point in points
-        )
-        points_html = f"<ul class='intro-points'>{items}</ul>"
+        card_icons = ["🎯", "💬", "⏱️"]  # Icons for different points
+        cards = ""
+        for i, point in enumerate(points[:3]):  # Limit to 3 cards
+            icon = card_icons[i] if i < len(card_icons) else "✓"
+            cards += f"""
+                <div class="info-card">
+                    <div class="info-icon">{icon}</div>
+                    <p class="info-text">{html_escape(point)}</p>
+                </div>
+            """
+        cards_html = f'<div class="info-cards">{cards}</div>'
 
-    # Prepare hero image markup (single source, placed differently per breakpoint)
-    hero_bytes = _load_planning_bytes()
-    if hero_bytes:
-        import base64
-
-        encoded = base64.b64encode(hero_bytes).decode("utf-8")
-        hero_block = (
-            "<div class='gcp-hero-card'>"
-            f"<img class='gcp-hero-img' src='data:image/png;base64,{encoded}' alt='Planning together at a table' />"
-            "</div>"
-        )
-    else:
-        hero_block = (
-            "<div class='gcp-hero-card placeholder'>"
-            "<div class='placeholder-text'>We'll add a guiding image here soon.</div>"
-            "</div>"
-        )
-
-    hero_desktop = f"<div class='intro-media intro-media--desktop'>{hero_block}</div>"
-    hero_mobile = f"<div class='intro-media intro-media--mobile'>{hero_block}</div>"
-
-    # Inject scoped CSS for layout and typography (ASCII only)
+    # Inject clean CSS matching Discovery Learning and Hub aesthetic
     st.markdown(
         """
         <style>
-          #gcp-intro.intro-wrap { max-width: 1100px; margin: -8px auto 0; padding: 0 24px 20px; }
-          #gcp-intro .intro-grid { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(0,0.95fr); gap: 32px; align-items: center; }
-          #gcp-intro .intro-copy { display: flex; flex-direction: column; gap: 14px; }
-          #gcp-intro .intro-heading { font-size: 1.9rem; font-weight: 700; color: #0d1f4b; margin: 0; line-height: 1.2; }
-          #gcp-intro .lead { font-size: 1.08rem; color: #1f2a44; line-height: 1.6; margin: 0; max-width: 60ch; }
-          #gcp-intro .helper { color: #1f3c88; font-size: 1rem; font-weight: 600; margin: 4px 0 0; }
-          #gcp-intro .intro-points { margin: 12px 0 0; padding: 0; list-style: none; }
-          #gcp-intro .intro-points li { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; color: #1f2937; font-size: 0.98rem; line-height: 1.5; }
-          #gcp-intro .intro-points li .dot { width: 12px; height: 12px; border-radius: 50%; background: #1f3c88; margin-top: 6px; flex-shrink: 0; }
-          #gcp-intro .intro-media { display: flex; justify-content: flex-end; }
-          #gcp-intro .intro-media--mobile { display: none !important; justify-content: center; margin: 4px 0 0; }
-          .gcp-hero-card { border-radius: 16px; box-shadow: 0 18px 32px rgba(16,24,40,.18); overflow: hidden; background: #fff; border: 12px solid #fff; width: clamp(260px, 34vw, 440px); transform: rotate(5deg); transform-origin: center; }
-          .gcp-hero-card.placeholder { display: flex; align-items: center; justify-content: center; padding: 24px; }
-          .gcp-hero-card .placeholder-text { color: #475569; font-weight: 500; text-align: center; }
-          .gcp-hero-img { width: 100%; height: auto; border-radius: 12px; display: block; }
-          @media (max-width: 900px) {
-            #gcp-intro .intro-grid { grid-template-columns: 1fr; gap: 20px; }
-            #gcp-intro .intro-copy { gap: 12px; }
-            #gcp-intro .intro-media--desktop { display: none !important; }
-            #gcp-intro .intro-media--mobile { display: flex !important; order: 1; }
-            #gcp-intro .intro-copy > .lead { order: 2; }
-            #gcp-intro .intro-copy > .helper { order: 3; }
-            #gcp-intro .intro-copy > .intro-points { order: 4; }
-            .gcp-hero-card { width: clamp(220px, 78vw, 360px); transform: rotate(3deg); }
+          /* === Page Container === */
+          #gcp-intro {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px 32px;
+          }
+          
+          /* === Navi Intro Card (Compact) === */
+          .navi-intro-card {
+            background: linear-gradient(135deg, #f0f4ff 0%, #f8f9fe 100%);
+            border: 2px solid #e0e7ff;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin: 0 0 2rem;
+            box-shadow: 0 2px 8px rgba(124, 92, 255, 0.1);
+          }
+          .navi-intro-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+          }
+          .navi-intro-icon {
+            font-size: 1.25rem;
+          }
+          .navi-intro-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0E1E54;
+            margin: 0;
+          }
+          .navi-intro-message {
+            font-size: 0.95rem;
+            color: #4b4f63;
+            line-height: 1.5;
+            margin: 0;
+          }
+          
+          /* === Main Title === */
+          .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0E1E54;
+            text-align: center;
+            margin: 2rem 0 1rem;
+            line-height: 1.2;
+          }
+          
+          /* === Lead Text === */
+          .lead-text {
+            font-size: 1.1rem;
+            color: #4b4f63;
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 1.5rem;
+            line-height: 1.6;
+          }
+          
+          /* === Helper Text === */
+          .helper-text {
+            font-size: 1rem;
+            color: #1f3c88;
+            font-weight: 600;
+            text-align: center;
+            margin: 0 0 2rem;
+          }
+          
+          /* === Info Cards Grid === */
+          .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin: 0 0 2rem;
+          }
+          
+          .info-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+            text-align: center;
+          }
+          
+          .info-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+          }
+          
+          .info-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+          }
+          
+          .info-text {
+            font-size: 0.95rem;
+            color: #4b4f63;
+            line-height: 1.5;
+            margin: 0;
+          }
+          
+          /* === CTA Section === */
+          .cta-section {
+            background: linear-gradient(135deg, #f8f9fe 0%, #f0f4ff 100%);
+            border: 1px solid #e0e7ff;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0 0;
+          }
+          
+          .cta-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #0E1E54;
+            margin: 0 0 0.5rem;
+          }
+          
+          .cta-subtitle {
+            font-size: 0.95rem;
+            color: #6b7280;
+            margin: 0 0 1.5rem;
+          }
+          
+          /* === Mobile Responsive === */
+          @media (max-width: 768px) {
+            .page-title {
+              font-size: 2rem;
+            }
+            .lead-text {
+              font-size: 1rem;
+            }
+            .info-cards {
+              grid-template-columns: 1fr;
+              gap: 1rem;
+            }
+            .info-card {
+              padding: 1.25rem;
+            }
+            .cta-section {
+              padding: 1.5rem;
+            }
           }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    layout_html = f"""
-        <div id=\"gcp-intro\" class=\"intro-wrap\">
-          <div class=\"intro-grid\">
-            <div class=\"intro-copy\">
-              <div class=\"intro-heading\">{title_text}</div>
-              {hero_mobile}
-              <p class=\"lead\">{lead_text}</p>
-              {f"<p class='helper'>{helper_text}</p>" if helper_text else ""}
-              {points_html}
+    # Build layout HTML
+    navi_intro = f"""
+        <div class="navi-intro-card">
+            <div class="navi-intro-header">
+                <span class="navi-intro-icon">✨</span>
+                <span class="navi-intro-title">NAVI</span>
             </div>
-            {hero_desktop}
+            <p class="navi-intro-message">{lead_text if lead_text else "Answer these questions to match the right level of support."}</p>
+        </div>
+    """
+
+    layout_html = f"""
+        <div id="gcp-intro">
+          {navi_intro}
+          <h1 class="page-title">{title_text if title_text else "Let's get you the right support"}</h1>
+          {f'<p class="helper-text">{helper_text}</p>' if helper_text else ''}
+          {cards_html}
+          <div class="cta-section">
+            <h3 class="cta-title">Ready to begin?</h3>
+            <p class="cta-subtitle">This assessment takes about 2 minutes and saves automatically.</p>
           </div>
         </div>
     """
