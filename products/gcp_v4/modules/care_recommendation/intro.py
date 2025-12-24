@@ -41,7 +41,7 @@ def load_intro_overrides() -> dict[str, Any]:
 
 
 def render_intro_step() -> None:
-    """Render the custom intro step with clean card-based layout matching app aesthetic."""
+    """Render simple, informative intro that sets clear expectations."""
     # Resolve content (overrides + tokens) using current session context
     ctx = build_token_context(st.session_state, snapshot=None)
     overrides = load_intro_overrides()
@@ -58,150 +58,120 @@ def render_intro_step() -> None:
         helper_text = copy.get("helper")
 
     title_text = copy.get("page_title", "")
-    lead_text = copy.get("lead", "")
 
-    points = [point for point in copy.get("points", []) if point]
-
-    # Inject clean CSS matching Discovery Learning and Hub aesthetic
+    # Simple CSS for clean, content-focused layout
     st.markdown(
         """
         <style>
-          /* === Page Container === */
-          #gcp-intro {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 0 24px 32px;
-          }
-          
-          /* === Main Title === */
-          .gcp-page-title {
-            font-size: 2.5rem;
+          .gcp-intro-title {
+            font-size: 2rem;
             font-weight: 700;
             color: #0E1E54;
-            text-align: center;
-            margin: 1rem 0 1rem;
-            line-height: 1.2;
+            margin: 0 0 0.75rem;
           }
           
-          /* === Helper Text === */
-          .gcp-helper-text {
+          .gcp-intro-helper {
             font-size: 1rem;
             color: #1f3c88;
-            font-weight: 600;
-            text-align: center;
             margin: 0 0 2rem;
           }
           
-          /* === Info Cards Grid === */
-          .gcp-info-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.25rem;
-            margin: 0 0 2rem;
-          }
-          
-          .gcp-info-card {
+          .gcp-intro-section {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             padding: 1.5rem;
-            transition: box-shadow 0.2s ease, transform 0.2s ease;
-            text-align: center;
+            margin: 1.5rem 0;
           }
           
-          .gcp-info-card:hover {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            transform: translateY(-2px);
-          }
-          
-          .gcp-info-icon {
-            font-size: 2rem;
-            margin-bottom: 0.75rem;
-          }
-          
-          .gcp-info-text {
-            font-size: 0.95rem;
-            color: #4b4f63;
-            line-height: 1.5;
-            margin: 0;
-          }
-          
-          /* === CTA Section === */
-          .gcp-cta-section {
-            background: linear-gradient(135deg, #f8f9fe 0%, #f0f4ff 100%);
-            border: 1px solid #e0e7ff;
-            border-radius: 12px;
-            padding: 2rem;
-            text-align: center;
-            margin: 2rem 0 0;
-          }
-          
-          .gcp-cta-title {
-            font-size: 1.25rem;
+          .gcp-intro-section h3 {
+            font-size: 1.1rem;
             font-weight: 600;
             color: #0E1E54;
-            margin: 0 0 0.5rem;
+            margin: 0 0 0.75rem;
           }
           
-          .gcp-cta-subtitle {
+          .gcp-intro-section p,
+          .gcp-intro-section ul {
             font-size: 0.95rem;
-            color: #6b7280;
+            color: #4b4f63;
+            line-height: 1.6;
             margin: 0;
           }
           
-          /* === Mobile Responsive === */
-          @media (max-width: 768px) {
-            .gcp-page-title {
-              font-size: 2rem;
-            }
-            .gcp-info-cards {
-              grid-template-columns: 1fr;
-              gap: 1rem;
-            }
-            .gcp-info-card {
-              padding: 1.25rem;
-            }
-            .gcp-cta-section {
-              padding: 1.5rem;
-            }
+          .gcp-intro-section ul {
+            padding-left: 1.25rem;
+            margin-top: 0.5rem;
+          }
+          
+          .gcp-intro-section li {
+            margin-bottom: 0.5rem;
+          }
+          
+          .gcp-intro-section li:last-child {
+            margin-bottom: 0;
+          }
+          
+          .gcp-cta-box {
+            background: #f8f9fe;
+            border: 1px solid #e0e7ff;
+            border-radius: 8px;
+            padding: 1.25rem;
+            text-align: center;
+            margin: 1.5rem 0 0;
+          }
+          
+          .gcp-cta-box p {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin: 0;
           }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    # Build title
-    default_title = "Let's get you the right support"
-    st.markdown(f'<h1 class="gcp-page-title">{html_escape(title_text) if title_text else default_title}</h1>', unsafe_allow_html=True)
+    # Title
+    default_title = "Care Recommendation Assessment"
+    st.markdown(f'<h1 class="gcp-intro-title">{html_escape(title_text) if title_text else default_title}</h1>', unsafe_allow_html=True)
     
     # Helper text
     if helper_text:
-        st.markdown(f'<p class="gcp-helper-text">{html_escape(helper_text)}</p>', unsafe_allow_html=True)
+        st.markdown(f'<p class="gcp-intro-helper">{html_escape(helper_text)}</p>', unsafe_allow_html=True)
     
-    # Build info cards using columns for better rendering
-    if points:
-        card_icons = ["🎯", "💬", "⏱️"]
-        
-        st.markdown('<div class="gcp-info-cards">', unsafe_allow_html=True)
-        
-        cols = st.columns(len(points[:3]))
-        for i, point in enumerate(points[:3]):
-            icon = card_icons[i] if i < len(card_icons) else "✓"
-            with cols[i]:
-                st.markdown(f"""
-                    <div class="gcp-info-card">
-                        <div class="gcp-info-icon">{icon}</div>
-                        <p class="gcp-info-text">{html_escape(point)}</p>
-                    </div>
-                """, unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # CTA section
+    # What this assessment does
     st.markdown("""
-        <div class="gcp-cta-section">
-            <h3 class="gcp-cta-title">Ready to begin?</h3>
-            <p class="gcp-cta-subtitle">This assessment takes about 2 minutes and saves automatically.</p>
+        <div class="gcp-intro-section">
+            <h3>What This Assessment Does</h3>
+            <p>We'll ask questions about daily activities and care needs to determine the right level of support. Your answers help us recommend:</p>
+            <ul>
+                <li><strong>Home care</strong> with professional caregivers coming to the home</li>
+                <li><strong>Assisted living</strong> for those who need regular help but want independence</li>
+                <li><strong>Memory care</strong> for cognitive support in a specialized environment</li>
+                <li><strong>Skilled nursing</strong> for complex medical needs requiring 24/7 care</li>
+            </ul>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # What to expect
+    st.markdown("""
+        <div class="gcp-intro-section">
+            <h3>Questions You'll Answer</h3>
+            <p>The assessment covers these key areas:</p>
+            <ul>
+                <li><strong>Daily activities:</strong> Bathing, dressing, eating, mobility, and toileting</li>
+                <li><strong>Household tasks:</strong> Cooking, cleaning, shopping, and medication management</li>
+                <li><strong>Cognitive health:</strong> Memory, decision-making, and confusion</li>
+                <li><strong>Behavioral needs:</strong> Wandering, agitation, or other challenges</li>
+                <li><strong>Medical conditions:</strong> Ongoing health issues requiring support</li>
+            </ul>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # CTA
+    st.markdown("""
+        <div class="gcp-cta-box">
+            <p><strong>Takes about 2 minutes</strong> • Progress saves automatically</p>
         </div>
     """, unsafe_allow_html=True)
 
