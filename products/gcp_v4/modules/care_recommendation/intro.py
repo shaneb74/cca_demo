@@ -41,7 +41,7 @@ def load_intro_overrides() -> dict[str, Any]:
 
 
 def render_intro_step() -> None:
-    """Render simple, informative intro that sets clear expectations."""
+    """Render simple intro matching Discovery Learning aesthetic - hero title, Navi box, brief text, CTA."""
     # Resolve content (overrides + tokens) using current session context
     ctx = build_token_context(st.session_state, snapshot=None)
     overrides = load_intro_overrides()
@@ -58,71 +58,97 @@ def render_intro_step() -> None:
         helper_text = copy.get("helper")
 
     title_text = copy.get("page_title", "")
+    person_name = st.session_state.get("person_name", "")
 
-    # Simple CSS for clean, content-focused layout
+    # Clean CSS matching Discovery Learning style
     st.markdown(
         """
         <style>
-          .gcp-intro-title {
-            font-size: 2rem;
+          /* Page Title */
+          .gcp-page-title {
+            font-size: 2.5rem;
             font-weight: 700;
             color: #0E1E54;
-            margin: 0 0 0.75rem;
+            text-align: center;
+            margin: 2rem 0 1rem;
+            line-height: 1.2;
           }
           
-          .gcp-intro-helper {
-            font-size: 1rem;
-            color: #1f3c88;
-            margin: 0 0 2rem;
-          }
-          
-          .gcp-intro-section {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-          }
-          
-          .gcp-intro-section h3 {
+          /* Hero Subtitle */
+          .gcp-hero-subtitle {
             font-size: 1.1rem;
+            color: #4b4f63;
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+          }
+          
+          /* Navi Card at Top */
+          .gcp-navi-card {
+            background: linear-gradient(135deg, #f0f4ff 0%, #f8f9fe 100%);
+            border: 2px solid #e0e7ff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 0 0 2rem;
+            box-shadow: 0 2px 8px rgba(124, 92, 255, 0.1);
+          }
+          
+          .gcp-navi-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+          }
+          
+          .gcp-navi-greeting {
+            font-size: 1.25rem;
             font-weight: 600;
             color: #0E1E54;
-            margin: 0 0 0.75rem;
           }
           
-          .gcp-intro-section p,
-          .gcp-intro-section ul {
-            font-size: 0.95rem;
+          .gcp-navi-intro {
+            font-size: 1rem;
             color: #4b4f63;
             line-height: 1.6;
             margin: 0;
           }
           
-          .gcp-intro-section ul {
-            padding-left: 1.25rem;
-            margin-top: 0.5rem;
+          /* Simple text paragraphs */
+          .gcp-text-section {
+            font-size: 1rem;
+            color: #4b4f63;
+            line-height: 1.7;
+            margin: 1.5rem 0;
+            max-width: 680px;
+            margin-left: auto;
+            margin-right: auto;
           }
           
-          .gcp-intro-section li {
-            margin-bottom: 0.5rem;
+          .gcp-text-section strong {
+            color: #0E1E54;
           }
           
-          .gcp-intro-section li:last-child {
-            margin-bottom: 0;
-          }
-          
+          /* CTA Box */
           .gcp-cta-box {
             background: #f8f9fe;
             border: 1px solid #e0e7ff;
-            border-radius: 8px;
-            padding: 1.25rem;
+            border-radius: 12px;
+            padding: 1.5rem;
             text-align: center;
-            margin: 1.5rem 0 0;
+            margin: 2rem auto 0;
+            max-width: 500px;
           }
           
-          .gcp-cta-box p {
-            font-size: 0.9rem;
+          .gcp-cta-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #0E1E54;
+            margin: 0 0 0.5rem;
+          }
+          
+          .gcp-cta-subtitle {
+            font-size: 0.95rem;
             color: #6b7280;
             margin: 0;
           }
@@ -131,47 +157,44 @@ def render_intro_step() -> None:
         unsafe_allow_html=True,
     )
 
-    # Title
-    default_title = "Care Recommendation Assessment"
-    st.markdown(f'<h1 class="gcp-intro-title">{html_escape(title_text) if title_text else default_title}</h1>', unsafe_allow_html=True)
+    # Hero title
+    default_title = "Let's Find the Right Level of Care"
+    st.markdown(f'<h1 class="gcp-page-title">{html_escape(title_text) if title_text else default_title}</h1>', unsafe_allow_html=True)
     
-    # Helper text
+    # Subtitle
     if helper_text:
-        st.markdown(f'<p class="gcp-intro-helper">{html_escape(helper_text)}</p>', unsafe_allow_html=True)
+        st.markdown(f'<p class="gcp-hero-subtitle">{html_escape(helper_text)}</p>', unsafe_allow_html=True)
     
-    # What this assessment does
-    st.markdown("""
-        <div class="gcp-intro-section">
-            <h3>What This Assessment Does</h3>
-            <p>We'll ask questions about daily activities and care needs to determine the right level of support. Your answers help us recommend:</p>
-            <ul>
-                <li><strong>Home care</strong> with professional caregivers coming to the home</li>
-                <li><strong>Assisted living</strong> for those who need regular help but want independence</li>
-                <li><strong>Memory care</strong> for cognitive support in a specialized environment</li>
-                <li><strong>Skilled nursing</strong> for complex medical needs requiring 24/7 care</li>
-            </ul>
+    # Navi intro box
+    name_display = f", {person_name}" if person_name else ""
+    st.markdown(f"""
+        <div class="gcp-navi-card">
+            <div class="gcp-navi-header">
+                <span style="font-size: 1.5rem;">✨</span>
+                <span class="gcp-navi-greeting">What to Expect</span>
+            </div>
+            <p class="gcp-navi-intro">Hi{name_display}! I'll guide you through a quick assessment about daily activities, cognitive health, and care needs. Your answers help us recommend the right level of support—whether that's home care, assisted living, memory care, or skilled nursing.</p>
         </div>
     """, unsafe_allow_html=True)
     
-    # What to expect
+    # Simple explanatory text
     st.markdown("""
-        <div class="gcp-intro-section">
-            <h3>Questions You'll Answer</h3>
-            <p>The assessment covers these key areas:</p>
-            <ul>
-                <li><strong>Daily activities:</strong> Bathing, dressing, eating, mobility, and toileting</li>
-                <li><strong>Household tasks:</strong> Cooking, cleaning, shopping, and medication management</li>
-                <li><strong>Cognitive health:</strong> Memory, decision-making, and confusion</li>
-                <li><strong>Behavioral needs:</strong> Wandering, agitation, or other challenges</li>
-                <li><strong>Medical conditions:</strong> Ongoing health issues requiring support</li>
-            </ul>
+        <div class="gcp-text-section">
+            <p><strong>This assessment takes about 2 minutes.</strong> We'll ask about things like bathing, dressing, mobility, memory, and any behavioral challenges. Be as honest as possible—there are no wrong answers, and your responses help us find the best care match.</p>
         </div>
     """, unsafe_allow_html=True)
     
-    # CTA
+    st.markdown("""
+        <div class="gcp-text-section">
+            <p>After we understand the needs, you'll receive a personalized care recommendation. From there, we'll help you explore costs, understand your options, and connect with verified providers.</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # CTA box
     st.markdown("""
         <div class="gcp-cta-box">
-            <p><strong>Takes about 2 minutes</strong> • Progress saves automatically</p>
+            <div class="gcp-cta-title">Ready to begin?</div>
+            <p class="gcp-cta-subtitle">Your progress saves automatically as you go</p>
         </div>
     """, unsafe_allow_html=True)
 
