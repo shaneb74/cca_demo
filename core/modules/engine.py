@@ -651,17 +651,19 @@ def run_module(config: ModuleConfig) -> dict[str, Any]:
     # Render content array (for info-type pages)
     # Check for custom intro rendering first (GCP v4 special case)
     custom_rendered = False
-    if step.content and config.product == "gcp_v4" and step.id == "intro":
+    if config.product == "gcp_v4" and step.id == "intro":
         try:
             from products.gcp_v4.modules.care_recommendation.intro import render_custom_intro_if_needed
             custom_rendered = render_custom_intro_if_needed()
-        except Exception:
+        except Exception as e:
             # Fall back to default rendering if custom intro fails
+            print(f"[GCP_INTRO] Custom intro failed: {e}")
             custom_rendered = False
     
     # Use default content rendering if no custom renderer or it failed
     if step.content and not custom_rendered:
         _render_content(step.content)
+
 
     new_values = _render_fields(step, state)
     if new_values:
