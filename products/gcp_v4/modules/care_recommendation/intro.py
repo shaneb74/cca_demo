@@ -205,13 +205,11 @@ def render_intro_step() -> None:
     """, unsafe_allow_html=True)
 
 
-def should_use_custom_intro() -> bool:
-    current_step_id = st.session_state.get("gcp_current_step_id", "")
-    return current_step_id == "intro"
-
-
 def render_custom_intro_if_needed() -> bool:
-    if should_use_custom_intro():
-        render_intro_step()
-        return True
-    return False
+    """Render custom intro - called by engine.py when on intro step.
+    
+    Engine already verified we're on the right step, so just render.
+    """
+    render_intro_step()
+    return True
+
