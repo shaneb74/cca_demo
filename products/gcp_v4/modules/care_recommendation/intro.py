@@ -210,6 +210,15 @@ def render_custom_intro_if_needed() -> bool:
     
     Engine already verified we're on the right step, so just render.
     """
-    render_intro_step()
-    return True
+    print("[GCP_INTRO] render_custom_intro_if_needed() called")
+    try:
+        render_intro_step()
+        print("[GCP_INTRO] render_intro_step() completed successfully")
+        return True
+    except Exception as e:
+        print(f"[GCP_INTRO] ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 
