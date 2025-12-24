@@ -651,18 +651,28 @@ def run_module(config: ModuleConfig) -> dict[str, Any]:
     # Render content array (for info-type pages)
     # Check for custom intro rendering first (GCP v4 special case)
     custom_rendered = False
+    print(f"[ENGINE_DEBUG] About to check custom intro: product={config.product}, step_id={step.id}")
     if config.product == "gcp_v4" and step.id == "intro":
+        print("[ENGINE_DEBUG] Matched GCP v4 intro, calling custom renderer")
         try:
             from products.gcp_v4.modules.care_recommendation.intro import render_custom_intro_if_needed
             custom_rendered = render_custom_intro_if_needed()
+            print(f"[ENGINE_DEBUG] Custom renderer returned: {custom_rendered}")
         except Exception as e:
             # Fall back to default rendering if custom intro fails
             print(f"[GCP_INTRO] Custom intro failed: {e}")
+            import traceback
+            traceback.print_exc()
             custom_rendered = False
+    else:
+        print(f"[ENGINE_DEBUG] Not GCP intro, skipping custom renderer")
     
     # Use default content rendering if no custom renderer or it failed
     if step.content and not custom_rendered:
+        print(f"[ENGINE_DEBUG] Rendering default content")
         _render_content(step.content)
+    else:
+        print(f"[ENGINE_DEBUG] Skipping content render (has_content={bool(step.content)}, custom_rendered={custom_rendered})")
 
 
     new_values = _render_fields(step, state)
